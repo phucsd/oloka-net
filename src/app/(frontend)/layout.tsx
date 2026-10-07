@@ -29,11 +29,11 @@ export default async function RootLayout(props: { children: React.ReactNode }) {
   const { children } = props
 
   return (
-    <html lang="vi" className="dark">
+    <html lang="vi">
       <head>
         <link rel="icon" type="image/svg+xml" href="/oloka-logo.svg" />
       </head>
-      <body className="min-h-screen flex flex-col bg-[#0A0E17] text-slate-100 antialiased selection:bg-[#46C7F0]/30 selection:text-white">
+      <body className="min-h-screen flex flex-col bg-[#F8FAFC] text-slate-900 antialiased selection:bg-[#46C7F0]/25 selection:text-slate-900">
         <Navbar />
         <main className="flex-1 w-full">{children}</main>
         <Footer />

@@ -1,186 +1,159 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useMemo, Suspense } from 'react'
 import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
 import { 
-  Newspaper, 
   Sparkles, 
   Clock, 
   Calendar, 
   ArrowRight, 
   Search, 
-  TrendingUp, 
   Tag,
-  Zap
+  Zap,
+  ChevronLeft,
+  ChevronRight,
+  Filter
 } from 'lucide-react'
+import { ALL_ARTICLES, CATEGORIES, ArticleItem } from '@/lib/news-data'
 
-interface NewsItem {
-  id: string
-  title: string
-  slug: string
-  category: string
-  categoryLabel: string
-  excerpt: string
-  publishedAt: string
-  readTime: string
-  featured?: boolean
-  color: 'cyan' | 'coral'
-  image: string
-}
+function NewsContent() {
+  const searchParams = useSearchParams()
+  const initialCategory = searchParams.get('category') || 'all'
 
-const SAMPLE_NEWS: NewsItem[] = [
-  {
-    id: '1',
-    title: 'Mô hình AI đa phương thức thế hệ mới chính thức vượt mốc tư duy thời gian thực',
-    slug: 'mo-hinh-ai-da-phuong-thuc-the-he-moi',
-    category: 'ai-news',
-    categoryLabel: 'Tin tức AI',
-    excerpt: 'Các phòng thí nghiệm trí tuệ nhân tạo hàng đầu vừa công bố bước nhảy vọt trong xử lý video và âm thanh song song với độ trễ dưới 80ms, mở ra kỷ nguyên trợ lý giọng nói siêu thực.',
-    publishedAt: '07/10/2026',
-    readTime: '4 phút đọc',
-    featured: true,
-    color: 'cyan',
-    image: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1200&q=80',
-  },
-  {
-    id: '2',
-    title: 'Cách tối ưu hóa giọng đọc AI cho Podcast và Video ngắn với TTS Studio',
-    slug: 'cach-toi-uu-hoa-giong-doc-ai-podcast-tts',
-    category: 'tutorials',
-    categoryLabel: 'Thủ thuật',
-    excerpt: 'Hướng dẫn từng bước thiết lập cao độ (pitch), tốc độ đọc và xử lý hậu kỳ âm thanh để biến giọng đọc máy thành giọng người truyền cảm đầy lôi cuốn.',
-    publishedAt: '06/10/2026',
-    readTime: '6 phút đọc',
-    featured: false,
-    color: 'coral',
-    image: 'https://images.unsplash.com/photo-1590602847861-f357a9332bbc?auto=format&fit=crop&w=800&q=80',
-  },
-  {
-    id: '3',
-    title: 'Cloudflare ra mắt kỷ nguyên Edge Database siêu tốc với độ trễ phân tán toàn cầu',
-    slug: 'cloudflare-ra-mat-ky-nguyen-edge-database-sieu-toc',
-    category: 'tech-trends',
-    categoryLabel: 'Xu hướng Công nghệ',
-    excerpt: 'Khảo sát hiệu năng thực tế của Cloudflare D1 và Workers khi vận hành CMS quy mô lớn: Tiết kiệm chi phí vượt trội và phản hồi dưới 15ms tại các điểm POP châu Á.',
-    publishedAt: '05/10/2026',
-    readTime: '5 phút đọc',
-    featured: false,
-    color: 'cyan',
-    image: 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=800&q=80',
-  },
-  {
-    id: '4',
-    title: 'Top 5 công cụ tạo mã QR thương hiệu 2 tone màu đẹp mắt và chuẩn in ấn 2026',
-    slug: 'top-5-cong-cu-tao-ma-qr-thuong-hieu-dep-mat',
-    category: 'reviews',
-    categoryLabel: 'Đánh giá Công cụ',
-    excerpt: 'Không còn những mã QR đen trắng đơn điệu, các nhà thiết kế hiện đại đang chuyển sang mã QR gradient có lồng ghép logo tâm điểm để tăng tỷ lệ quét lên 40%.',
-    publishedAt: '04/10/2026',
-    readTime: '3 phút đọc',
-    featured: false,
-    color: 'coral',
-    image: 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=800&q=80',
-  },
-]
-
-export default function NewsPage() {
-  const [selectedCat, setSelectedCat] = useState('all')
+  const [selectedCat, setSelectedCat] = useState<string>(initialCategory)
   const [search, setSearch] = useState('')
+  const [currentPage, setCurrentPage] = useState(1)
+  const articlesPerPage = 12
 
-  const featuredArticle = SAMPLE_NEWS.find((item) => item.featured)
-  const regularArticles = SAMPLE_NEWS.filter((item) => {
-    const matchesCat = selectedCat === 'all' || item.category === selectedCat
-    const matchesSearch =
-      item.title.toLowerCase().includes(search.toLowerCase()) ||
-      item.excerpt.toLowerCase().includes(search.toLowerCase())
-    return matchesCat && matchesSearch
-  })
+  // Filter articles based on category and search query
+  const filteredArticles = useMemo(() => {
+    return ALL_ARTICLES.filter((item) => {
+      const matchesCat = selectedCat === 'all' || item.category === selectedCat
+      const matchesSearch =
+        item.title.toLowerCase().includes(search.toLowerCase()) ||
+        item.excerpt.toLowerCase().includes(search.toLowerCase()) ||
+        item.tags.some(t => t.toLowerCase().includes(search.toLowerCase()))
+      return matchesCat && matchesSearch
+    })
+  }, [selectedCat, search])
+
+  // Pagination calculation
+  const totalPages = Math.ceil(filteredArticles.length / articlesPerPage) || 1
+  const paginatedArticles = useMemo(() => {
+    const start = (currentPage - 1) * articlesPerPage
+    return filteredArticles.slice(start, start + articlesPerPage)
+  }, [filteredArticles, currentPage])
+
+  // Handle category change
+  const handleCategoryChange = (catSlug: string) => {
+    setSelectedCat(catSlug)
+    setCurrentPage(1)
+  }
+
+  // Handle search change
+  const handleSearchChange = (val: string) => {
+    setSearch(val)
+    setCurrentPage(1)
+  }
+
+  const featuredArticle = ALL_ARTICLES.find((item) => item.featured) || ALL_ARTICLES[0]
 
   return (
-    <div className="py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+    <div className="py-10 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
       {/* Header */}
       <div className="text-center max-w-3xl mx-auto mb-10">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-[#F47D59]/10 text-[#F47D59] border border-[#F47D59]/20 mb-4">
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold bg-sky-100 text-[#0284c7] border border-sky-200 mb-4 shadow-2xs">
           <Zap className="w-3.5 h-3.5" />
-          <span>Oloka Tech & AI Newsroom</span>
+          <span>Oloka Tech & AI Newsroom (100 Bài viết)</span>
         </div>
-        <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-white mb-4">
-          Tin tức Công nghệ <span className="text-gradient">& AI News</span>
+        <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-slate-900 mb-4">
+          Cổng Tin tức Công nghệ <span className="text-gradient">& AI News</span>
         </h1>
-        <p className="text-slate-400 text-base sm:text-lg">
-          Cập nhật chuyển động nhanh nhất về Trí tuệ Nhân tạo, xu hướng đám mây Edge computing, đánh giá công cụ và hướng dẫn chuyên sâu.
+        <p className="text-slate-600 text-base sm:text-lg leading-relaxed">
+          Cập nhật chuyển động nhanh nhất về Trí tuệ Nhân tạo, điện toán Edge computing, cẩm nang thủ thuật và đánh giá sản phẩm thực chiến.
         </p>
 
-        {/* Search Input */}
+        {/* Search Input - Light Theme */}
         <div className="mt-8 max-w-xl mx-auto relative">
-          <Search className="w-5 h-5 text-slate-500 absolute left-4 top-1/2 -translate-y-1/2" />
+          <Search className="w-5 h-5 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2" />
           <input
             type="text"
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Tìm kiếm bài viết công nghệ, tin AI..."
-            className="w-full pl-12 pr-4 py-3 rounded-2xl bg-[#111827] border border-slate-800 text-white placeholder-slate-500 focus:outline-none focus:border-[#46C7F0] text-sm"
+            onChange={(e) => handleSearchChange(e.target.value)}
+            placeholder="Tìm kiếm theo tiêu đề, nội dung hoặc thẻ (#AI, #TTS, #Security...)"
+            className="w-full pl-12 pr-4 py-3.5 rounded-2xl bg-white border border-slate-300 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-[#0284c7] text-sm shadow-xs"
           />
         </div>
       </div>
 
       {/* Category Filter Pills */}
-      <div className="flex flex-wrap items-center justify-center gap-2 mb-10">
-        {[
-          { id: 'all', label: 'Tất cả bài viết' },
-          { id: 'ai-news', label: 'Tin tức AI' },
-          { id: 'tech-trends', label: 'Xu hướng Công nghệ' },
-          { id: 'tutorials', label: 'Thủ thuật & Hướng dẫn' },
-          { id: 'reviews', label: 'Đánh giá Công cụ' },
-        ].map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => setSelectedCat(tab.id)}
-            className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-medium transition-all ${
-              selectedCat === tab.id
-                ? 'bg-gradient-to-r from-[#46C7F0] to-[#F47D59] text-white shadow-md'
-                : 'bg-[#111827] text-slate-400 hover:text-white border border-slate-800 hover:border-slate-700'
-            }`}
-          >
-            {tab.label}
-          </button>
-        ))}
+      <div className="flex flex-wrap items-center justify-center gap-2 mb-10 pb-2">
+        <button
+          onClick={() => handleCategoryChange('all')}
+          className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all ${
+            selectedCat === 'all'
+              ? 'bg-gradient-to-r from-[#46C7F0] to-[#F47D59] text-white shadow-xs'
+              : 'bg-white text-slate-700 hover:text-slate-900 border border-slate-200 hover:bg-slate-50'
+          }`}
+        >
+          Tất cả ({ALL_ARTICLES.length})
+        </button>
+
+        {CATEGORIES.map((tab) => {
+          const count = ALL_ARTICLES.filter(a => a.category === tab.slug).length
+          return (
+            <button
+              key={tab.id}
+              onClick={() => handleCategoryChange(tab.slug)}
+              className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all ${
+                selectedCat === tab.slug
+                  ? 'bg-gradient-to-r from-[#46C7F0] to-[#F47D59] text-white shadow-xs'
+                  : 'bg-white text-slate-700 hover:text-slate-900 border border-slate-200 hover:bg-slate-50'
+              }`}
+            >
+              {tab.name} ({count})
+            </button>
+          )
+        })}
       </div>
 
-      {/* Featured Big Card */}
-      {featuredArticle && selectedCat === 'all' && !search && (
-        <div className="mb-12 bg-[#111827] border border-slate-800 hover:border-slate-700 rounded-3xl overflow-hidden transition-all duration-300 hover:shadow-2xl hover:shadow-[#46C7F0]/10">
+      {/* Featured Big Card (Visible on page 1, all categories, no search) */}
+      {currentPage === 1 && selectedCat === 'all' && !search && featuredArticle && (
+        <div className="mb-12 bg-white border border-slate-200 hover:border-slate-300 rounded-3xl overflow-hidden transition-all duration-300 shadow-sm hover:shadow-md">
           <div className="grid grid-cols-1 lg:grid-cols-12">
             <div className="lg:col-span-7 p-6 sm:p-10 flex flex-col justify-between">
               <div>
                 <div className="flex items-center gap-3 mb-4">
-                  <span className="px-3 py-1 rounded-full text-xs font-bold bg-[#46C7F0]/10 text-[#46C7F0] border border-[#46C7F0]/20 flex items-center gap-1.5">
+                  <span className="px-3 py-1 rounded-full text-xs font-bold bg-sky-100 text-[#0284c7] border border-sky-200 flex items-center gap-1.5">
                     <Sparkles className="w-3 h-3" />
-                    <span>{featuredArticle.categoryLabel}</span>
+                    <span>{featuredArticle.categoryName}</span>
                   </span>
-                  <span className="text-xs text-slate-400 flex items-center gap-1">
+                  <span className="text-xs text-slate-500 flex items-center gap-1">
                     <Calendar className="w-3.5 h-3.5" />
                     <span>{featuredArticle.publishedAt}</span>
                   </span>
-                  <span className="text-xs text-slate-400 flex items-center gap-1">
+                  <span className="text-xs text-slate-500 flex items-center gap-1">
                     <Clock className="w-3.5 h-3.5" />
                     <span>{featuredArticle.readTime}</span>
                   </span>
                 </div>
 
-                <h2 className="text-2xl sm:text-3xl font-extrabold text-white mb-4 hover:text-[#46C7F0] transition-colors leading-snug">
-                  {featuredArticle.title}
-                </h2>
-                <p className="text-sm sm:text-base text-slate-400 leading-relaxed mb-6">
+                <Link href={`/news/${featuredArticle.slug}`}>
+                  <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 mb-4 hover:text-[#0284c7] transition-colors leading-snug tracking-tight">
+                    {featuredArticle.title}
+                  </h2>
+                </Link>
+                <p className="text-sm sm:text-base text-slate-600 leading-relaxed mb-6">
                   {featuredArticle.excerpt}
                 </p>
               </div>
 
-              <div className="pt-4 border-t border-slate-800 flex items-center justify-between">
-                <span className="text-xs text-slate-500 font-mono">BÀI VIẾT NỔI BẬT</span>
+              <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
+                <span className="text-xs text-slate-400 font-mono font-bold tracking-wider">TIÊU ĐIỂM CHỌN LỌC</span>
                 <Link
                   href={`/news/${featuredArticle.slug}`}
-                  className="inline-flex items-center gap-2 text-sm font-semibold text-[#46C7F0] hover:text-[#F47D59] transition-colors"
+                  className="inline-flex items-center gap-2 text-sm font-bold text-[#0284c7] hover:text-[#ea580c] transition-colors"
                 >
                   <span>Đọc toàn bộ bài viết</span>
                   <ArrowRight className="w-4 h-4" />
@@ -188,44 +161,55 @@ export default function NewsPage() {
               </div>
             </div>
 
-            <div className="lg:col-span-5 relative min-h-[260px] lg:min-h-full">
+            <div className="lg:col-span-5 relative min-h-[260px] lg:min-h-full bg-slate-100">
               <img
-                src={featuredArticle.image}
+                src={featuredArticle.imageUrl}
                 alt={featuredArticle.title}
                 className="w-full h-full object-cover"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#111827] via-transparent to-transparent lg:hidden" />
             </div>
           </div>
         </div>
       )}
 
-      {/* News Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {regularArticles.map((article) => {
-          const isCyan = article.color === 'cyan'
+      {/* Result Count and Current Filter Indicator */}
+      <div className="flex items-center justify-between mb-6 pb-2 border-b border-slate-200 text-xs text-slate-500">
+        <span>
+          Hiển thị <strong>{paginatedArticles.length}</strong> / <strong>{filteredArticles.length}</strong> bài viết phù hợp
+        </span>
+        <span>
+          Trang <strong>{currentPage}</strong> trên <strong>{totalPages}</strong>
+        </span>
+      </div>
 
-          return (
+      {/* Regular Articles Grid */}
+      {paginatedArticles.length === 0 ? (
+        <div className="text-center py-16 bg-white rounded-3xl border border-slate-200">
+          <p className="text-base text-slate-600 mb-3">Không tìm thấy bài viết nào phù hợp với từ khóa "{search}".</p>
+          <button
+            onClick={() => { setSearch(''); setSelectedCat('all'); }}
+            className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-[#46C7F0] to-[#F47D59]"
+          >
+            Đặt lại bộ lọc
+          </button>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {paginatedArticles.map((article) => (
             <article
               key={article.id}
-              className="bg-[#111827] border border-slate-800 hover:border-slate-700 rounded-2xl overflow-hidden transition-all duration-300 hover:shadow-xl hover:shadow-[#46C7F0]/10 flex flex-col justify-between"
+              className="bg-white border border-slate-200 hover:border-slate-300 rounded-2xl overflow-hidden transition-all duration-300 shadow-sm hover:shadow-md flex flex-col justify-between"
             >
               <div>
-                <div className="h-48 overflow-hidden relative">
+                <div className="h-48 overflow-hidden relative bg-slate-100">
                   <img
-                    src={article.image}
+                    src={article.imageUrl}
                     alt={article.title}
                     className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
                   />
                   <div className="absolute top-3 left-3">
-                    <span
-                      className={`px-2.5 py-1 rounded-full text-[11px] font-bold border backdrop-blur-md ${
-                        isCyan
-                          ? 'bg-[#0A0E17]/80 text-[#46C7F0] border-[#46C7F0]/30'
-                          : 'bg-[#0A0E17]/80 text-[#F47D59] border-[#F47D59]/30'
-                      }`}
-                    >
-                      {article.categoryLabel}
+                    <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-white/95 text-slate-800 border border-slate-200 shadow-xs backdrop-blur-sm">
+                      {article.categoryName}
                     </span>
                   </div>
                 </div>
@@ -237,29 +221,110 @@ export default function NewsPage() {
                     <span>{article.readTime}</span>
                   </div>
 
-                  <h3 className="text-lg font-bold text-white mb-2.5 line-clamp-2 hover:text-[#46C7F0] transition-colors">
-                    {article.title}
-                  </h3>
-                  <p className="text-xs sm:text-sm text-slate-400 line-clamp-3 leading-relaxed">
+                  <Link href={`/news/${article.slug}`}>
+                    <h3 className="text-base sm:text-lg font-bold text-slate-900 mb-2.5 line-clamp-2 hover:text-[#0284c7] transition-colors leading-snug">
+                      {article.title}
+                    </h3>
+                  </Link>
+                  <p className="text-xs sm:text-sm text-slate-600 line-clamp-3 leading-relaxed mb-4">
                     {article.excerpt}
                   </p>
+
+                  {/* Tags */}
+                  <div className="flex flex-wrap gap-1.5 mt-auto">
+                    {article.tags.slice(0, 3).map((tag, tIdx) => (
+                      <span
+                        key={tIdx}
+                        className="px-2 py-0.5 rounded text-[10px] font-medium bg-slate-100 text-slate-600 border border-slate-200"
+                      >
+                        #{tag}
+                      </span>
+                    ))}
+                  </div>
                 </div>
               </div>
 
-              <div className="p-5 sm:p-6 pt-0 border-t border-slate-800/80 mt-4 flex items-center justify-between">
+              <div className="p-5 sm:p-6 pt-0 border-t border-slate-100 mt-2 flex items-center justify-between">
                 <Link
                   href={`/news/${article.slug}`}
-                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#46C7F0] hover:text-white transition-colors"
+                  className="inline-flex items-center gap-1.5 text-xs font-bold text-[#0284c7] hover:text-[#ea580c] transition-colors"
                 >
                   <span>Xem chi tiết</span>
                   <ArrowRight className="w-3.5 h-3.5" />
                 </Link>
-                <span className="text-[11px] text-slate-500 font-mono">OLOKA NEWS</span>
+                <span className="text-[11px] text-slate-400 font-mono">OLOKA NEWS</span>
               </div>
             </article>
-          )
-        })}
-      </div>
+          ))}
+        </div>
+      )}
+
+      {/* Pagination Controls */}
+      {totalPages > 1 && (
+        <div className="mt-12 flex items-center justify-center gap-2">
+          <button
+            onClick={() => {
+              if (currentPage > 1) {
+                setCurrentPage(currentPage - 1)
+                window.scrollTo({ top: 0, behavior: 'smooth' })
+              }
+            }}
+            disabled={currentPage === 1}
+            className="p-2.5 rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed shadow-2xs"
+            aria-label="Previous page"
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </button>
+
+          {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
+            // Show only relevant pages around current page
+            if (page === 1 || page === totalPages || (page >= currentPage - 2 && page <= currentPage + 2)) {
+              return (
+                <button
+                  key={page}
+                  onClick={() => {
+                    setCurrentPage(page)
+                    window.scrollTo({ top: 0, behavior: 'smooth' })
+                  }}
+                  className={`min-w-[40px] h-10 px-3 rounded-xl text-xs font-bold transition-all ${
+                    currentPage === page
+                      ? 'bg-gradient-to-r from-[#46C7F0] to-[#F47D59] text-white shadow-xs'
+                      : 'bg-white text-slate-700 hover:bg-slate-50 border border-slate-200'
+                  }`}
+                >
+                  {page}
+                </button>
+              )
+            }
+            if (page === currentPage - 3 || page === currentPage + 3) {
+              return <span key={page} className="px-1 text-slate-400 text-xs">...</span>
+            }
+            return null
+          })}
+
+          <button
+            onClick={() => {
+              if (currentPage < totalPages) {
+                setCurrentPage(currentPage + 1)
+                window.scrollTo({ top: 0, behavior: 'smooth' })
+              }
+            }}
+            disabled={currentPage === totalPages}
+            className="p-2.5 rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed shadow-2xs"
+            aria-label="Next page"
+          >
+            <ChevronRight className="w-4 h-4" />
+          </button>
+        </div>
+      )}
     </div>
+  )
+}
+
+export default function NewsPage() {
+  return (
+    <Suspense fallback={<div className="py-20 text-center text-slate-500 text-sm">Đang tải bản tin...</div>}>
+      <NewsContent />
+    </Suspense>
   )
 }

@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState, useEffect, useRef } from 'react'
+import Link from 'next/link'
 import { 
   Volume2, 
   Play, 
@@ -13,21 +14,13 @@ import {
   Globe2, 
   Copy, 
   Check, 
-  AudioWaveform as Waveform,
-  Radio
+  ExternalLink,
+  ArrowLeft
 } from 'lucide-react'
-
-interface VoiceOption {
-  name: string
-  lang: string
-  gender: string
-  tag: string
-  systemVoice?: SpeechSynthesisVoice
-}
 
 export default function TTSStudio() {
   const [text, setText] = useState(
-    'Chào mừng bạn đến với Oloka.net! Nền tảng tổng hợp các công cụ AI, Text to Speech, Voice Studio và cập nhật tin tức công nghệ mới nhất.'
+    'Chào mừng bạn đến với Oloka.net! Nền tảng tổng hợp tin tức công nghệ AI nóng hổi và danh bạ liên kết các công cụ thông minh.'
   )
   const [rate, setRate] = useState(1.0)
   const [pitch, setPitch] = useState(1.0)
@@ -38,7 +31,6 @@ export default function TTSStudio() {
   
   const [isPlaying, setIsPlaying] = useState(false)
   const [isPaused, setIsPaused] = useState(false)
-  const [engineMode, setEngineMode] = useState<'browser' | 'gateway'>('browser')
   const [copied, setCopied] = useState(false)
 
   const synthRef = useRef<SpeechSynthesis | null>(null)
@@ -53,7 +45,6 @@ export default function TTSStudio() {
         const voices = synthRef.current?.getVoices() || []
         setAvailableVoices(voices)
 
-        // Try to pick Vietnamese voice first, or default
         const viIndex = voices.findIndex((v) => v.lang.startsWith('vi'))
         if (viIndex !== -1) {
           setSelectedVoiceIndex(viIndex)
@@ -63,14 +54,18 @@ export default function TTSStudio() {
       }
 
       updateVoices()
-      if (speechSynthesis.onvoiceschanged !== undefined) {
-        speechSynthesis.onvoiceschanged = updateVoices
+      if (synthRef.current.onvoiceschanged !== undefined) {
+        synthRef.current.onvoiceschanged = updateVoices
       }
     }
   }, [])
 
+  // Handle Play/Stop Speech
   const handlePlay = () => {
-    if (!synthRef.current || !text.trim()) return
+    if (!synthRef.current) {
+      alert('Trình duyệt của bạn không hỗ trợ Web Speech API.')
+      return
+    }
 
     if (isPaused) {
       synthRef.current.resume()
@@ -81,17 +76,15 @@ export default function TTSStudio() {
 
     synthRef.current.cancel()
 
+    if (!text.trim()) return
+
     const utterance = new SpeechSynthesisUtterance(text)
-    if (availableVoices[selectedVoiceIndex]) {
-      utterance.voice = availableVoices[selectedVoiceIndex]
-    }
     utterance.rate = rate
     utterance.pitch = pitch
     utterance.volume = volume
 
-    utterance.onstart = () => {
-      setIsPlaying(true)
-      setIsPaused(false)
+    if (availableVoices[selectedVoiceIndex]) {
+      utterance.voice = availableVoices[selectedVoiceIndex]
     }
 
     utterance.onend = () => {
@@ -99,13 +92,16 @@ export default function TTSStudio() {
       setIsPaused(false)
     }
 
-    utterance.onerror = () => {
+    utterance.onerror = (e) => {
+      console.error('Speech error', e)
       setIsPlaying(false)
       setIsPaused(false)
     }
 
     utteranceRef.current = utterance
     synthRef.current.speak(utterance)
+    setIsPlaying(true)
+    setIsPaused(false)
   }
 
   const handlePause = () => {
@@ -124,104 +120,120 @@ export default function TTSStudio() {
     }
   }
 
-  const handlePreset = (presetText: string) => {
-    handleStop()
-    setText(presetText)
+  const handleReset = () => {
+    setRate(1.0)
+    setPitch(1.0)
+    setVolume(1.0)
+  }
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(text)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
   }
 
   return (
     <div className="py-10 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+      {/* Back button */}
+      <Link
+        href="/tools"
+        className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-[#0284c7] transition-colors mb-6"
+      >
+        <ArrowLeft className="w-4 h-4" />
+        <span>Quay lại Kho Công cụ</span>
+      </Link>
+
       {/* Header */}
       <div className="text-center max-w-3xl mx-auto mb-10">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-[#46C7F0]/10 text-[#46C7F0] border border-[#46C7F0]/20 mb-4">
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold bg-sky-100 text-[#0284c7] border border-sky-200 mb-4 shadow-2xs">
           <Sparkles className="w-3.5 h-3.5" />
-          <span>Oloka AI Text-to-Speech Engine</span>
+          <span>Oloka Text-to-Speech Studio</span>
         </div>
-        <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-white mb-4">
-          TTS Studio <span className="text-gradient">Chuyển Giọng Nói</span>
+        <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-slate-900 mb-4">
+          TTS Studio <span className="text-gradient">Giọng Đọc AI</span>
         </h1>
-        <p className="text-slate-400 text-base sm:text-lg">
-          Trình đọc văn bản tự động tốc độ cao, hỗ trợ đa giọng điệu tiếng Việt và quốc tế, tinh chỉnh cao độ & nhịp điệu mượt mà.
+        <p className="text-slate-600 text-base sm:text-lg">
+          Thử nghiệm chuyển văn bản thành giọng nói trực tiếp trên trình duyệt, kết hợp liên kết trực tiếp tới <strong>OmniVoice Gateway</strong> tại <strong className="text-[#0284c7]">voice.oloka.net</strong>.
         </p>
       </div>
 
+      {/* OmniVoice Callout Banner */}
+      <div className="mb-8 p-6 rounded-2xl bg-gradient-to-r from-sky-50 via-white to-orange-50 border border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm">
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-2xl bg-sky-100 border border-sky-200 text-[#0284c7] flex items-center justify-center flex-shrink-0">
+            <Volume2 className="w-6 h-6" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <h3 className="text-base font-bold text-slate-900">OmniVoice AI Gateway Chuyên Nghiệp</h3>
+              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                RECOMMENDED
+              </span>
+            </div>
+            <p className="text-xs text-slate-600">
+              Để sử dụng các mô hình nơ-ron sâu tiếng Việt 3 miền Bắc - Trung - Nam đạt chuẩn studio, hãy truy cập trực tiếp cổng OmniVoice.
+            </p>
+          </div>
+        </div>
+
+        <a
+          href="https://voice.oloka.net"
+          target="_blank"
+          rel="noreferrer"
+          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-[#0284c7] hover:bg-sky-600 shadow-xs transition-colors flex-shrink-0"
+        >
+          <span>Mở voice.oloka.net</span>
+          <ExternalLink className="w-3.5 h-3.5" />
+        </a>
+      </div>
+
+      {/* Main Studio Console - Light Theme */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-        {/* Main Editor */}
-        <div className="lg:col-span-8 bg-[#111827] border border-slate-800 rounded-2xl p-6 sm:p-8 space-y-6">
-          {/* Quick Presets */}
+        {/* Left: Text Input & Controls */}
+        <div className="lg:col-span-8 bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 space-y-6 shadow-sm">
           <div>
             <div className="flex items-center justify-between mb-2">
-              <label className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-                Mẫu nội dung đọc nhanh:
+              <label className="text-xs font-bold uppercase tracking-wider text-slate-700">
+                Văn bản cần đọc
               </label>
-              <span className="text-xs text-slate-500">{text.length} ký tự</span>
+              <div className="flex items-center gap-3 text-xs text-slate-500">
+                <span>{text.length} ký tự</span>
+                <button
+                  onClick={handleCopy}
+                  className="hover:text-slate-900 flex items-center gap-1 font-semibold"
+                >
+                  {copied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+                  <span>{copied ? 'Đã chép' : 'Sao chép'}</span>
+                </button>
+              </div>
             </div>
-            <div className="flex flex-wrap gap-2">
-              <button
-                type="button"
-                onClick={() =>
-                  handlePreset(
-                    'Chào bạn! Hãy cùng Oloka.net cập nhật những tin tức công nghệ AI nóng hổi và trải nghiệm các công cụ sáng tạo nhất hôm nay.'
-                  )
-                }
-                className="text-xs px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 hover:border-[#46C7F0] hover:text-[#46C7F0] transition-colors"
-              >
-                Lời chào mở đầu
-              </button>
-              <button
-                type="button"
-                onClick={() =>
-                  handlePreset(
-                    'Hôm nay, các nhà nghiên cứu vừa công bố bước đột phá mới trong lĩnh vực mô hình đa phương thức, giúp xử lý ngôn ngữ và hình ảnh tức thì.'
-                  )
-                }
-                className="text-xs px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 hover:border-[#F47D59] hover:text-[#F47D59] transition-colors"
-              >
-                Bản tin AI News
-              </button>
-              <button
-                type="button"
-                onClick={() =>
-                  handlePreset(
-                    'Đừng quên quét mã QR bên dưới để tải tài liệu và kết nối với cộng đồng công nghệ Oloka nhé.'
-                  )
-                }
-                className="text-xs px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 hover:border-[#46C7F0] hover:text-[#46C7F0] transition-colors"
-              >
-                Kêu gọi hành động
-              </button>
-            </div>
-          </div>
 
-          {/* Text Area */}
-          <div className="relative">
             <textarea
-              rows={7}
+              rows={6}
               value={text}
               onChange={(e) => setText(e.target.value)}
-              placeholder="Nhập hoặc dán đoạn văn bản bạn muốn chuyển thành giọng nói tại đây..."
-              className="w-full p-4 rounded-xl bg-[#0A0E17] border border-slate-700/80 text-white placeholder-slate-500 focus:outline-none focus:border-[#46C7F0] text-base leading-relaxed resize-y"
+              placeholder="Nhập nội dung cần chuyển thành giọng đọc..."
+              className="w-full p-4 rounded-xl bg-slate-50 border border-slate-300 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-[#0284c7] text-sm leading-relaxed"
             />
           </div>
 
-          {/* Controls Bar & Waveform */}
-          <div className="p-4 rounded-xl bg-slate-900/90 border border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4">
-            {/* Playback Buttons */}
+          {/* Action Bar */}
+          <div className="flex flex-wrap items-center justify-between gap-4 pt-2 border-t border-slate-100">
             <div className="flex items-center gap-3">
               {!isPlaying ? (
                 <button
                   type="button"
                   onClick={handlePlay}
-                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm text-white bg-gradient-to-r from-[#46C7F0] to-[#F47D59] hover:opacity-95 shadow-lg shadow-[#46C7F0]/20 transition-all"
+                  className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm text-white bg-gradient-to-r from-[#46C7F0] to-[#F47D59] hover:opacity-90 shadow-sm transition-all cursor-pointer"
                 >
                   <Play className="w-4 h-4 fill-white" />
-                  <span>Đọc ngay</span>
+                  <span>{isPaused ? 'Tiếp tục đọc' : 'Phát âm thanh'}</span>
                 </button>
               ) : (
                 <button
                   type="button"
                   onClick={handlePause}
-                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm text-white bg-[#F47D59] hover:bg-[#F47D59]/90 transition-all"
+                  className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm text-white bg-amber-500 hover:bg-amber-600 shadow-sm transition-all cursor-pointer"
                 >
                   <Pause className="w-4 h-4 fill-white" />
                   <span>Tạm dừng</span>
@@ -231,154 +243,104 @@ export default function TTSStudio() {
               <button
                 type="button"
                 onClick={handleStop}
-                className="p-2.5 rounded-xl bg-slate-800 text-slate-300 hover:text-white hover:bg-slate-700 transition-colors"
-                title="Dừng lại"
+                disabled={!isPlaying && !isPaused}
+                className="inline-flex items-center gap-1.5 px-4 py-3 rounded-xl text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
               >
-                <RotateCcw className="w-4 h-4" />
+                <span>Dừng lại</span>
               </button>
             </div>
 
-            {/* Waveform Visualizer effect */}
-            <div className="flex items-center gap-1.5 h-8 px-4 bg-[#0A0E17] rounded-lg border border-slate-800">
-              {[40, 75, 55, 90, 60, 85, 45, 95, 70, 50, 80, 65].map((height, i) => (
-                <span
-                  key={i}
-                  className={`w-1 rounded-full transition-all duration-200 ${
-                    isPlaying
-                      ? i % 2 === 0
-                        ? 'bg-[#46C7F0] animate-pulse'
-                        : 'bg-[#F47D59] animate-pulse'
-                      : 'bg-slate-700'
-                  }`}
-                  style={{
-                    height: isPlaying ? `${Math.max(15, (height * (i % 3 + 1)) % 100)}%` : '20%',
-                  }}
-                />
-              ))}
-              <span className="text-[11px] font-mono text-slate-400 ml-2">
-                {isPlaying ? 'ĐANG PHÁT' : 'SẴN SÀNG'}
-              </span>
-            </div>
+            <button
+              type="button"
+              onClick={handleReset}
+              className="inline-flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-900 font-semibold transition-colors"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+              <span>Đặt lại thông số</span>
+            </button>
           </div>
         </div>
 
-        {/* Sidebar Settings */}
-        <div className="lg:col-span-4 bg-[#111827] border border-slate-800 rounded-2xl p-6 space-y-6">
-          <h3 className="text-sm font-semibold uppercase tracking-wider text-slate-300 flex items-center gap-2">
-            <Sliders className="w-4 h-4 text-[#46C7F0]" />
-            <span>Tùy chỉnh Giọng đọc</span>
-          </h3>
-
-          {/* Engine Selector */}
+        {/* Right: Sound Controls Sidebar */}
+        <div className="lg:col-span-4 bg-white border border-slate-200 rounded-2xl p-6 space-y-6 shadow-sm">
           <div>
-            <label className="block text-xs font-medium text-slate-400 mb-2">
-              Bộ xử lý âm thanh:
-            </label>
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                onClick={() => setEngineMode('browser')}
-                className={`py-2 px-3 text-xs font-medium rounded-lg border text-center transition-all ${
-                  engineMode === 'browser'
-                    ? 'border-[#46C7F0] bg-[#46C7F0]/10 text-white'
-                    : 'border-slate-800 bg-slate-900 text-slate-400'
-                }`}
+            <h3 className="text-sm font-bold uppercase tracking-wider text-slate-900 mb-4 flex items-center gap-2">
+              <Sliders className="w-4 h-4 text-[#0284c7]" />
+              <span>Tùy chỉnh thông số âm</span>
+            </h3>
+
+            {/* Voice Selector */}
+            <div className="mb-5">
+              <label className="block text-xs font-semibold text-slate-700 mb-2">
+                Giọng đọc hệ thống:
+              </label>
+              <select
+                value={selectedVoiceIndex}
+                onChange={(e) => setSelectedVoiceIndex(Number(e.target.value))}
+                className="w-full p-2.5 rounded-lg bg-slate-50 border border-slate-300 text-slate-800 text-xs focus:outline-none focus:border-[#0284c7]"
               >
-                Trình duyệt (Browser)
-              </button>
-              <a
-                href="https://voice.oloka.net"
-                target="_blank"
-                rel="noreferrer"
-                className="py-2 px-3 text-xs font-medium rounded-lg border border-slate-800 bg-slate-900 text-slate-400 hover:text-white hover:border-[#F47D59] text-center flex items-center justify-center gap-1"
-              >
-                <span>OmniVoice (Cloud)</span>
-                <span className="w-1.5 h-1.5 rounded-full bg-[#F47D59] animate-ping" />
-              </a>
+                {availableVoices.length > 0 ? (
+                  availableVoices.map((voice, idx) => (
+                    <option key={idx} value={idx}>
+                      {voice.name} ({voice.lang})
+                    </option>
+                  ))
+                ) : (
+                  <option value={0}>Giọng đọc mặc định</option>
+                )}
+              </select>
             </div>
-          </div>
 
-          {/* Voice selection */}
-          <div>
-            <label className="block text-xs font-medium text-slate-400 mb-2">
-              Chọn giọng đọc ({availableVoices.length} giọng khả dụng):
-            </label>
-            <select
-              value={selectedVoiceIndex}
-              onChange={(e) => setSelectedVoiceIndex(Number(e.target.value))}
-              className="w-full px-3 py-2.5 rounded-xl bg-[#0A0E17] border border-slate-700 text-white text-xs focus:outline-none focus:border-[#46C7F0]"
-            >
-              {availableVoices.map((voice, idx) => (
-                <option key={idx} value={idx}>
-                  {voice.name} ({voice.lang})
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Sliders */}
-          <div className="space-y-4 pt-2 border-t border-slate-800">
-            {/* Speed / Rate */}
-            <div>
-              <div className="flex justify-between text-xs text-slate-300 mb-1">
-                <span>Tốc độ đọc (Speed)</span>
-                <span className="font-mono text-[#46C7F0]">{rate}x</span>
+            {/* Sliders */}
+            <div className="space-y-4">
+              <div>
+                <div className="flex justify-between text-xs font-semibold text-slate-700 mb-1">
+                  <span>Tốc độ đọc (Speed)</span>
+                  <span className="font-mono text-[#0284c7]">{rate}x</span>
+                </div>
+                <input
+                  type="range"
+                  min="0.5"
+                  max="2.0"
+                  step="0.1"
+                  value={rate}
+                  onChange={(e) => setRate(parseFloat(e.target.value))}
+                  className="w-full accent-[#0284c7] cursor-pointer"
+                />
               </div>
-              <input
-                type="range"
-                min="0.5"
-                max="2"
-                step="0.1"
-                value={rate}
-                onChange={(e) => setRate(parseFloat(e.target.value))}
-                className="w-full accent-[#46C7F0] cursor-pointer"
-              />
-            </div>
 
-            {/* Pitch */}
-            <div>
-              <div className="flex justify-between text-xs text-slate-300 mb-1">
-                <span>Cao độ (Pitch)</span>
-                <span className="font-mono text-[#F47D59]">{pitch}x</span>
+              <div>
+                <div className="flex justify-between text-xs font-semibold text-slate-700 mb-1">
+                  <span>Cao độ (Pitch)</span>
+                  <span className="font-mono text-[#ea580c]">{pitch}x</span>
+                </div>
+                <input
+                  type="range"
+                  min="0.5"
+                  max="1.5"
+                  step="0.1"
+                  value={pitch}
+                  onChange={(e) => setPitch(parseFloat(e.target.value))}
+                  className="w-full accent-[#ea580c] cursor-pointer"
+                />
               </div>
-              <input
-                type="range"
-                min="0.5"
-                max="1.5"
-                step="0.1"
-                value={pitch}
-                onChange={(e) => setPitch(parseFloat(e.target.value))}
-                className="w-full accent-[#F47D59] cursor-pointer"
-              />
-            </div>
 
-            {/* Volume */}
-            <div>
-              <div className="flex justify-between text-xs text-slate-300 mb-1">
-                <span>Âm lượng (Volume)</span>
-                <span className="font-mono text-white">{Math.round(volume * 100)}%</span>
+              <div>
+                <div className="flex justify-between text-xs font-semibold text-slate-700 mb-1">
+                  <span>Âm lượng (Volume)</span>
+                  <span className="font-mono text-slate-800">{Math.round(volume * 100)}%</span>
+                </div>
+                <input
+                  type="range"
+                  min="0.0"
+                  max="1.0"
+                  step="0.05"
+                  value={volume}
+                  onChange={(e) => setVolume(parseFloat(e.target.value))}
+                  className="w-full accent-slate-800 cursor-pointer"
+                />
               </div>
-              <input
-                type="range"
-                min="0"
-                max="1"
-                step="0.1"
-                value={volume}
-                onChange={(e) => setVolume(parseFloat(e.target.value))}
-                className="w-full accent-slate-400 cursor-pointer"
-              />
             </div>
-          </div>
-
-          {/* Tips card */}
-          <div className="p-3.5 rounded-xl bg-slate-900/60 border border-slate-800 text-xs text-slate-400 space-y-1.5">
-            <p className="font-semibold text-slate-300 flex items-center gap-1">
-              <Radio className="w-3.5 h-3.5 text-[#46C7F0]" />
-              <span>Gợi ý trải nghiệm tốt nhất</span>
-            </p>
-            <p>
-              Đối với tiếng Việt, nếu thiết bị của bạn có sẵn Google Tiếng Việt hoặc Microsoft HoaiMy, hệ thống sẽ tự động ưu tiên giọng đọc truyền cảm tự nhiên nhất.
-            </p>
           </div>
         </div>
       </div>

@@ -44,7 +44,15 @@ export const Articles: CollectionConfig = {
       name: 'coverImage',
       type: 'upload',
       relationTo: 'media',
-      label: 'Ảnh đại diện',
+      label: 'Ảnh đại diện (Tải lên)',
+    },
+    {
+      name: 'imageUrl',
+      type: 'text',
+      label: 'Hoặc URL ảnh bìa trực tiếp',
+      admin: {
+        position: 'sidebar',
+      },
     },
     {
       name: 'content',
