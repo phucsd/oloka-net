@@ -42,6 +42,7 @@
     "react-dom": "19.2.6"
   },
   "devDependencies": {
+    "@ast-grep/napi-linux-x64-gnu": "^0.45.3",
     "@eslint/eslintrc": "^3.2.0",
     "@playwright/test": "1.58.2",
     "@tailwindcss/postcss": "^4.3.3",

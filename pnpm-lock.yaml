@@ -54,6 +54,9 @@ importers:
         specifier: 19.2.6
         version: 19.2.6(react@19.2.6)
     devDependencies:
+      '@ast-grep/napi-linux-x64-gnu':
+        specifier: ^0.45.3
+        version: 0.45.3
       '@eslint/eslintrc':
         specifier: ^3.2.0
         version: 3.3.7(supports-color@10.2.2)
@@ -169,6 +172,12 @@ packages:
     cpu: [x64]
     os: [linux]
     libc: [glibc]
+
+  '@ast-grep/napi-linux-x64-gnu@0.45.3':
+    resolution: {integrity: sha512-lluRK3hxfHMQdFuVID6seAKVx4FH0kEwF6rCh5/I40Sf3EtNR2UCBXAqd6RBA6hqlSckktvBxCfw+h4aescDmg==}
+    engines: {node: '>= 10'}
+    cpu: [x64]
+    os: [linux]
 
   '@ast-grep/napi-linux-x64-musl@0.40.5':
     resolution: {integrity: sha512-BRZUvVBPUNpWPo6Ns8chXVzxHPY+k9gpsubGTHy92Q26ecZULd/dTkWWdnvfhRqttsSQ9Pe/XQdi5+hDQ6RYcg==}
@@ -6177,6 +6186,8 @@ snapshots:
 
   '@ast-grep/napi-linux-x64-gnu@0.40.5':
     optional: true
+
+  '@ast-grep/napi-linux-x64-gnu@0.45.3': {}
 
   '@ast-grep/napi-linux-x64-musl@0.40.5':
     optional: true
