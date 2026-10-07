@@ -16,8 +16,8 @@
   "d1_databases": [
     {
       "binding": "D1",
-      "database_id": "DATABASE_ID",
-      "database_name": "oloka-net-db"
+      "database_id": "4c06a31a-d8d7-4106-bfbe-e0bba7ff8157",
+      "database_name": "oloka-net"
     }
   ],
   "services": [],
