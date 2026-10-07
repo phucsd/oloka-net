@@ -4,7 +4,7 @@ export const Tools: CollectionConfig = {
   slug: 'tools',
   admin: {
     useAsTitle: 'name',
-    defaultColumns: ['name', 'category', 'badge', 'featured'],
+    defaultColumns: ['name', 'category', 'url', 'badge', 'featured'],
   },
   access: {
     read: () => true,
@@ -14,28 +14,34 @@ export const Tools: CollectionConfig = {
       name: 'name',
       type: 'text',
       required: true,
-      label: 'Tên công cụ',
+      label: 'Tên công cụ (Vd: OmniVoice, QR Generator, ElevenLabs...)',
     },
     {
       name: 'slug',
       type: 'text',
       required: true,
       unique: true,
-      label: 'Slug (Đường dẫn)',
+      label: 'Slug định danh',
       admin: {
         position: 'sidebar',
       },
     },
     {
+      name: 'url',
+      type: 'text',
+      required: true,
+      label: 'Hyperlink dẫn đến công cụ (Vd: https://voice.oloka.net hoặc link ngoài)',
+    },
+    {
       name: 'shortDescription',
       type: 'textarea',
       required: true,
-      label: 'Mô tả ngắn',
+      label: 'Mô tả ngắn gọn về công cụ',
     },
     {
       name: 'icon',
       type: 'text',
-      label: 'Icon (Lucide name, vd: Mic, QrCode, Sparkles, Volume2)',
+      label: 'Icon hiển thị (Lucide name, vd: Mic, QrCode, Sparkles, Volume2, Globe...)',
       defaultValue: 'Sparkles',
     },
     {
@@ -44,20 +50,14 @@ export const Tools: CollectionConfig = {
       label: 'Nhóm công cụ',
       required: true,
       options: [
-        { label: 'Voice & Âm thanh', value: 'voice' },
-        { label: 'Tiện ích & Mã hóa', value: 'utility' },
-        { label: 'AI & Sáng tạo', value: 'ai' },
-        { label: 'Lập trình & Dev', value: 'developer' },
+        { label: 'Voice & Âm thanh (TTS, AI Voice)', value: 'voice' },
+        { label: 'Tiện ích & QR Code', value: 'utility' },
+        { label: 'Trí tuệ nhân tạo (AI Tools)', value: 'ai' },
+        { label: 'Lập trình & Dev Tools', value: 'developer' },
       ],
       admin: {
         position: 'sidebar',
       },
-    },
-    {
-      name: 'route',
-      type: 'text',
-      required: true,
-      label: 'Đường dẫn liên kết (Vd: /tools/tts, /tools/qr-code)',
     },
     {
       name: 'badge',
@@ -77,7 +77,7 @@ export const Tools: CollectionConfig = {
     {
       name: 'featured',
       type: 'checkbox',
-      label: 'Ghim nổi bật trên Trang chủ',
+      label: 'Ghim vào thanh Tiện ích nổi bật trên Trang chủ',
       defaultValue: false,
       admin: {
         position: 'sidebar',
@@ -86,7 +86,7 @@ export const Tools: CollectionConfig = {
     {
       name: 'order',
       type: 'number',
-      label: 'Thứ tự hiển thị',
+      label: 'Thứ tự ưu tiên',
       defaultValue: 0,
       admin: {
         position: 'sidebar',
