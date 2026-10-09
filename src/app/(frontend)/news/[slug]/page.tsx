@@ -20,15 +20,66 @@ import {
   ShieldCheck,
   Tag
 } from 'lucide-react'
-import { ALL_ARTICLES } from '@/lib/news-data'
+import { ALL_ARTICLES, ArticleItem } from '@/lib/news-data'
 
 export default function ArticleDetailPage() {
   const params = useParams()
   const slug = params?.slug as string
   const [copied, setCopied] = useState(false)
+  const [dynamicArticle, setDynamicArticle] = useState<ArticleItem | null>(null)
 
-  // Find article by slug, or fallback to first article
-  const article = ALL_ARTICLES.find((a) => a.slug === slug) || ALL_ARTICLES[0]
+  // Fetch from D1 if not present in static ALL_ARTICLES
+  React.useEffect(() => {
+    const staticFound = ALL_ARTICLES.find((a) => a.slug === slug)
+    if (!staticFound && slug) {
+      fetch(`/api/articles?where[slug][equals]=${encodeURIComponent(slug)}&depth=1`)
+        .then((res) => res.json())
+        .then((data: any) => {
+          const doc = data?.docs?.[0]
+          if (doc) {
+            let paragraphs: string[] = []
+            try {
+              if (doc.content?.root?.children) {
+                paragraphs = doc.content.root.children
+                  .filter((c: any) => c.type === 'paragraph')
+                  .map((c: any) => c.children?.map((ch: any) => ch.text).join('') || '')
+                  .filter(Boolean)
+              }
+            } catch {}
+
+            setDynamicArticle({
+              id: String(doc.id),
+              title: doc.title,
+              slug: doc.slug,
+              category: doc.category?.slug || 'tech-trends',
+              categoryName: doc.category?.name || 'Xu hướng Công nghệ',
+              categoryColor: doc.category?.color || '#46C7F0',
+              excerpt: doc.excerpt || '',
+              imageUrl: doc.imageUrl || 'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1200&q=80',
+              imageCaption: 'Ảnh tư liệu bài viết tự động cập nhật',
+              author: 'Biên tập viên Oloka News',
+              source: { name: 'Oloka Automation' },
+              publishedAt: doc.publishedAt ? new Date(doc.publishedAt).toLocaleDateString('vi-VN') : 'Mới cập nhật',
+              readTime: '4 phút đọc',
+              featured: Boolean(doc.featured),
+              keyTakeaways: ['Bài viết phân tích tự động từ hệ thống xuất bản tin tức AI Oloka.'],
+              sections: [
+                {
+                  heading: 'Diễn biến và bối cảnh sự kiện',
+                  paragraphs: paragraphs.length > 0 ? paragraphs : [doc.excerpt || ''],
+                },
+              ],
+              references: [],
+              tags: (doc.tags || []).map((t: any) => t.tag || t).filter(Boolean),
+            })
+          }
+        })
+        .catch(() => {})
+    }
+  }, [slug])
+
+  // Find article by slug, or dynamic article, or fallback to first article
+  const article = ALL_ARTICLES.find((a) => a.slug === slug) || dynamicArticle || ALL_ARTICLES[0]
 
   // Related articles in same category
   const relatedArticles = ALL_ARTICLES

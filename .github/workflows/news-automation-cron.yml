@@ -1,0 +1,60 @@
+name: OLoka News Automation - 3-Hour Publishing Cycle
+
+on:
+  schedule:
+    # Runs every 3 hours at 00:00, 03:00, 06:00, 09:00, 12:00, 15:00, 18:00, 21:00 (Asia/Ho_Chi_Minh, UTC+7)
+    - cron: '0 17,20,23,2,5,8,11,14 * * *'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Chạy thử không lưu vào database (Dry Run)'
+        type: boolean
+        default: false
+      force_run:
+        description: 'Bỏ qua giới hạn 8 bài/ngày để test'
+        type: boolean
+        default: false
+      source_id:
+        description: 'Chỉ thu thập nguồn cụ thể (để trống nếu chạy tất cả)'
+        type: string
+        default: ''
+
+jobs:
+  publish_cycle:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run News Automation Pipeline
+        run: |
+          FLAGS=""
+          if [ "${{ github.event.inputs.dry_run }}" = "true" ]; then
+            FLAGS="$FLAGS --dry-run"
+          fi
+          if [ "${{ github.event.inputs.force_run }}" = "true" ]; then
+            FLAGS="$FLAGS --force"
+          fi
+          if [ -n "${{ github.event.inputs.source_id }}" ]; then
+            FLAGS="$FLAGS --source=${{ github.event.inputs.source_id }}"
+          fi
+          node scripts/automation/run_cron.mjs $FLAGS
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: '7719e72989f5f2c061f486cb0fe89fda'
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          PAYLOAD_SECRET: ${{ secrets.PAYLOAD_SECRET }}
