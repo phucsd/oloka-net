@@ -65,7 +65,7 @@ function NewsContent() {
       <div className="text-center max-w-3xl mx-auto mb-10">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold bg-sky-100 text-[#0284c7] border border-sky-200 mb-4 shadow-2xs">
           <Zap className="w-3.5 h-3.5" />
-          <span>Oloka Tech & AI Newsroom (100 Bài viết)</span>
+          <span>Oloka Tech & AI Newsroom ({ALL_ARTICLES.length} Bài viết tuyển chọn)</span>
         </div>
         <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-slate-900 mb-4">
           Cổng Tin tức Công nghệ <span className="text-gradient">& AI News</span>

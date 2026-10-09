@@ -133,7 +133,7 @@ export const Footer: React.FC = () => {
               </li>
               <li>
                 <span className="text-xs text-slate-500">
-                  Cơ sở dữ liệu: Cloudflare D1 (100 bài viết)
+                  Cơ sở dữ liệu: Cloudflare D1 (40 bài viết tuyển chọn)
                 </span>
               </li>
               <li>

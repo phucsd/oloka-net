@@ -318,7 +318,7 @@ export default function HomePage() {
           <div>
             <div className="inline-flex items-center gap-1.5 text-xs font-bold text-[#0284c7] uppercase tracking-wider mb-2">
               <Sparkles className="w-4 h-4" />
-              <span>Kho Lưu trữ 100 Bài viết</span>
+              <span>Kho Lưu trữ {ALL_ARTICLES.length} Bài viết Tuyển chọn</span>
             </div>
             <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
               Dòng Tin tức & Sự kiện Công nghệ
@@ -328,7 +328,7 @@ export default function HomePage() {
             href="/news"
             className="mt-3 sm:mt-0 inline-flex items-center gap-1.5 text-sm font-bold text-[#0284c7] hover:text-[#ea580c] transition-colors"
           >
-            <span>Mở toàn bộ danh sách 100 bài</span>
+            <span>Mở toàn bộ danh sách {ALL_ARTICLES.length} bài</span>
             <ArrowRight className="w-4 h-4" />
           </Link>
         </div>
@@ -420,7 +420,7 @@ export default function HomePage() {
             href="/news"
             className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-bold text-slate-800 bg-white border border-slate-200 hover:bg-slate-50 hover:border-slate-300 shadow-xs transition-all"
           >
-            <span>Duyệt toàn bộ 100 bài viết theo chuyên mục</span>
+            <span>Duyệt toàn bộ {ALL_ARTICLES.length} bài viết theo chuyên mục</span>
             <ArrowRight className="w-4 h-4 text-[#0284c7]" />
           </Link>
         </div>

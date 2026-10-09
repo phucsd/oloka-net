@@ -111,7 +111,7 @@ export const Navbar: React.FC = () => {
             className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold text-white bg-gradient-to-r from-[#46C7F0] to-[#F47D59] hover:opacity-90 rounded-lg shadow-xs transition-all"
           >
             <TrendingUp className="w-3.5 h-3.5" />
-            <span>100 Bài viết</span>
+            <span>40 Bài viết</span>
           </Link>
         </div>
 
