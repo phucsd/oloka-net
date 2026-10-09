@@ -76,8 +76,12 @@ export function createHttpD1Executor(
 
 export async function getD1Executor(): Promise<D1Executor> {
   const token = process.env.CLOUDFLARE_API_TOKEN || ''
-  const accountId = process.env.CLOUDFLARE_ACCOUNT_ID || '7719e72989f5f2c061f486cb0fe89fda'
-  const dbId = '4c06a31a-d8d7-4106-bfbe-e0bba7ff8157' // oloka-net D1 database ID
+  const accountId = process.env.CLOUDFLARE_ACCOUNT_ID || ''
+  const dbId = process.env.CLOUDFLARE_D1_DATABASE_ID || ''
+
+  if (!token || !accountId || !dbId) {
+    throw new Error('Missing Cloudflare D1 runner credentials in environment')
+  }
 
   // If running from CLI / standalone runner, ALWAYS use Cloudflare HTTP API to target remote D1 directly
   if (process.env.IS_STANDALONE_RUNNER === 'true' || typeof (globalThis as any).WebSocketPair === 'undefined') {
