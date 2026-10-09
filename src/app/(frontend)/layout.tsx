@@ -5,7 +5,6 @@ import { Footer } from './components/Footer'
 
 export const metadata = {
   metadataBase: new URL('https://oloka.net'),
-  alternates: { canonical: '/' },
   robots: { index: true, follow: true },
   openGraph: {
     type: 'website',
