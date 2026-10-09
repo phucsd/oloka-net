@@ -317,13 +317,10 @@ Nội dung: ${sanitizedContent}`
     }
   }
 
-  // Fallback to deterministic synthesis if AI is not configured or failed
+  // Never auto-publish fabricated fallback text or invented quotations.
+  // If AI editing is unavailable, fail closed and retry on the next cycle.
   if (!aiProcessed) {
-    const synthesized = synthesizeEditorialArticle(candidate, source)
-    titleVi = synthesized.titleVi
-    excerptVi = synthesized.excerptVi
-    keyTakeaways = synthesized.keyTakeaways
-    sections = synthesized.sections
+    throw new Error('AI editorial verification unavailable; refusing automated publication')
   }
 
   // Generate URL slug

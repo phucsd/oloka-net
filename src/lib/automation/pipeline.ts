@@ -18,6 +18,7 @@
  */
 
 import { APPROVED_SOURCES } from './source-registry'
+import { assessNewsQuality } from '../news-quality-gate'
 import { fetchFeedForSource } from './rss-parser'
 import { verifyArticleLicense } from './copyright-engine'
 import { scoreCandidate, classifyCategory, generateContentFingerprint } from './ranking-engine'
@@ -267,6 +268,30 @@ export async function runNewsAutomationPipeline(
       await recordAutomationLog(db, logEntry)
       await releaseDistributedLock(db, 'oloka_news_cron_lock')
       return { success: false, message: 'Lỗi kiểm tra chất lượng bài viết trước khi đăng.', log: logEntry }
+    }
+
+    // Independent quality gate. AI output alone cannot certify factual accuracy.
+    // Keep content in review until an independent fact-check signal is available.
+    const quality = assessNewsQuality({
+      title: enriched.titleVi,
+      body: [enriched.excerptVi, ...enriched.sections.flatMap((s) => s.paragraphs)].join('\\n'),
+      sourceUrl: selected.candidate.canonicalUrl,
+      sourceName: selected.source.name,
+      language: 'vi',
+      factualReviewPassed: false,
+      duplicateCheckPassed: true,
+      contentReuseAuthorized: selected.candidate.licenseVerified,
+      imageUrl: enriched.image.url,
+      imageReuseAuthorized: enriched.image.isVerifiedSafe,
+      references: enriched.references.map((reference) => reference.url).filter((url): url is string => Boolean(url)),
+    })
+    if (!quality.publish && !options.dryRun) {
+      logEntry.status = 'skipped'
+      logEntry.errorDetails = 'Quality gate requires independent factual verification: ' + quality.reasons.join(', ')
+      logEntry.executionTimeMs = Date.now() - startTime
+      await recordAutomationLog(db, logEntry)
+      await releaseDistributedLock(db, 'oloka_news_cron_lock')
+      return { success: false, message: 'Chưa đạt kiểm tra độc lập; không tự động xuất bản.', log: logEntry }
     }
 
     // 9. Publishing Phase

@@ -4,6 +4,16 @@ import { Navbar } from './components/Navbar'
 import { Footer } from './components/Footer'
 
 export const metadata = {
+  metadataBase: new URL('https://oloka.net'),
+  robots: { index: true, follow: true },
+  openGraph: {
+    type: 'website',
+    locale: 'vi_VN',
+    siteName: 'Oloka.net',
+    url: 'https://oloka.net',
+    title: 'Oloka.net | Công cụ AI và Tin tức Công nghệ',
+    description: 'Công cụ AI tiếng Việt, TTS, tạo mã QR và tin tức công nghệ tại Oloka.net.',
+  },
   title: 'Oloka.net | Hub Công cụ AI, TTS, Voice, QR Code & Tin tức Công nghệ',
   description:
     'Oloka.net - Cổng tổng hợp công cụ AI, Text to Speech tiếng Việt, Voice Studio, tạo mã QR 2 tone màu thương hiệu độc đáo và tin tức công nghệ AI nóng hổi mỗi ngày.',
