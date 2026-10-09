@@ -34,7 +34,7 @@ export default function AutomationAdminPage() {
   const fetchStatus = async () => {
     try {
       setLoading(true)
-      const res = await fetch('/api/automation/status')
+      const res = await fetch('/api-automation/status')
       const json = (await res.json()) as any
       if (json.success) {
         setStatusData(json.data)
@@ -54,7 +54,7 @@ export default function AutomationAdminPage() {
     try {
       setRunning(true)
       setMessage(null)
-      const res = await fetch('/api/automation/run', {
+      const res = await fetch('/api-automation/run', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
