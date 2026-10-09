@@ -283,13 +283,14 @@ export async function runNewsAutomationPipeline(
       contentReuseAuthorized: selected.candidate.licenseVerified,
       imageUrl: enriched.image.url,
       imageReuseAuthorized: enriched.image.isVerifiedSafe,
-      references: enriched.references.map((reference) => reference.url),
+      references: enriched.references.map((reference) => reference.url).filter((url): url is string => Boolean(url)),
     })
     if (!quality.publish && !options.dryRun) {
       logEntry.status = 'skipped'
       logEntry.errorDetails = 'Quality gate requires independent factual verification: ' + quality.reasons.join(', ')
       logEntry.executionTimeMs = Date.now() - startTime
       await recordAutomationLog(db, logEntry)
+      await releaseDistributedLock(db, 'oloka_news_cron_lock')
       return { success: false, message: 'Chưa đạt kiểm tra độc lập; không tự động xuất bản.', log: logEntry }
     }
 
