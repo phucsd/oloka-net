@@ -79,13 +79,16 @@ export async function getD1Executor(): Promise<D1Executor> {
   const accountId = process.env.CLOUDFLARE_ACCOUNT_ID || ''
   const dbId = process.env.CLOUDFLARE_D1_DATABASE_ID || ''
 
-  if (!token || !accountId || !dbId) {
-    throw new Error('Missing Cloudflare D1 runner credentials in environment')
+  const remoteExecutor = () => {
+    if (!token || !accountId || !dbId) {
+      throw new Error('Missing Cloudflare D1 runner credentials in environment')
+    }
+    return createHttpD1Executor(accountId, dbId, token)
   }
 
   // If running from CLI / standalone runner, ALWAYS use Cloudflare HTTP API to target remote D1 directly
   if (process.env.IS_STANDALONE_RUNNER === 'true' || typeof (globalThis as any).WebSocketPair === 'undefined') {
-    return createHttpD1Executor(accountId, dbId, token)
+    return remoteExecutor()
   }
 
   // Check if running in OpenNext / Cloudflare Workers runtime
@@ -99,5 +102,5 @@ export async function getD1Executor(): Promise<D1Executor> {
     // Not in worker runtime
   }
 
-  return createHttpD1Executor(accountId, dbId, token)
+  return remoteExecutor()
 }
