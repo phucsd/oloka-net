@@ -7,7 +7,10 @@ export const Articles: CollectionConfig = {
     defaultColumns: ['title', 'category', 'status', 'publishedAt'],
   },
   access: {
-    read: () => true,
+    read: ({ req }) => req.user ? true : { status: { equals: 'published' } },
+    create: ({ req }) => Boolean(req.user),
+    update: ({ req }) => Boolean(req.user),
+    delete: ({ req }) => Boolean(req.user),
   },
   fields: [
     {
@@ -86,7 +89,7 @@ export const Articles: CollectionConfig = {
       name: 'status',
       type: 'select',
       label: 'Trạng thái',
-      defaultValue: 'published',
+      defaultValue: 'draft',
       options: [
         { label: 'Bản nháp', value: 'draft' },
         { label: 'Đã xuất bản', value: 'published' },
