@@ -39,6 +39,11 @@ import {
   slugifyVietnamese,
   generateSeoMetadata,
   buildNewsArticleSchema,
+  detectGeoTarget,
+  buildGeoMetaTags,
+  buildOrganizationSchema,
+  buildCombinedArticleJsonLd,
+  generateFullArticleMetadata,
 } from '@/lib/automation/seo-geo-engine'
 import {
   synthesizeEditorialArticle,
@@ -314,8 +319,8 @@ describe('OLoka News Automation Test Suite', () => {
     })
   })
 
-  // Test 16: SEO & JSON-LD Schema Validation
-  describe('16. SEO & Schema Validation', () => {
+  // Test 16: SEO & GEO Optimization Engine Validation
+  describe('16. Comprehensive SEO & GEO Optimization Engine', () => {
     it('should generate clean diacritic-free Vietnamese URL slug', () => {
       const title = 'Trí tuệ Nhân tạo DeepSeek-R1 Đạt Cột mốc Lịch sử'
       const slug = slugifyVietnamese(title)
@@ -332,6 +337,67 @@ describe('OLoka News Automation Test Suite', () => {
       expect(seo.metaTitle.length).toBeLessThanOrEqual(70)
       expect(seo.metaDescription.length).toBeLessThanOrEqual(160)
       expect(seo.canonicalUrl).toBe('https://oloka.net/news/huong-dan-cai-dat-linux')
+    })
+
+    it('should accurately detect geographic targets (Hanoi, Saigon, Da Nang, Global)', () => {
+      const hnGeo = detectGeoTarget('Hội thảo AI tại Hà Nội thu hút hàng ngàn kỹ sư', 'Nội dung sự kiện tại thủ đô')
+      expect(hnGeo.region).toBe('VN-HN')
+      expect(hnGeo.coordinates).toBe('21.0285, 105.8542')
+
+      const sgGeo = detectGeoTarget('Khai trương trung tâm R&D tại TP.HCM', 'Công viên phần mềm Quang Trung Sài Gòn')
+      expect(sgGeo.region).toBe('VN-SG')
+      expect(sgGeo.coordinates).toBe('10.8231, 106.6297')
+
+      const dnGeo = detectGeoTarget('Đà Nẵng thúc đẩy vi mạch bán dẫn', 'Hạ tầng miền Trung sẵn sàng')
+      expect(dnGeo.region).toBe('VN-DN')
+
+      const defaultGeo = detectGeoTarget('Mô hình mạng nơ-ron tổng quát', 'Nghiên cứu cơ bản về toán học')
+      expect(defaultGeo.region).toBe('VN')
+    })
+
+    it('should generate valid W3C and ICBM Geotagging meta tags', () => {
+      const geoMeta = buildGeoMetaTags({
+        region: 'VN-HN',
+        place: 'Hà Nội, Việt Nam',
+        coordinates: '21.0285, 105.8542',
+        countryCode: 'VN',
+        placenameEn: 'Hanoi, Vietnam',
+      })
+
+      expect(geoMeta['geo.region']).toBe('VN-HN')
+      expect(geoMeta['geo.placename']).toBe('Hà Nội, Việt Nam')
+      expect(geoMeta['geo.position']).toBe('21.0285;105.8542')
+      expect(geoMeta['ICBM']).toBe('21.0285, 105.8542')
+    })
+
+    it('should build complete NewsArticle JSON-LD with contentLocation and spatialCoverage', () => {
+      const sampleArticle = ALL_ARTICLES[0]
+      const schema: any = buildNewsArticleSchema(sampleArticle)
+
+      expect(schema['@context']).toBe('https://schema.org')
+      expect(schema['@type']).toBe('NewsArticle')
+      expect(schema.headline).toBe(sampleArticle.title)
+      expect(schema.inLanguage).toBe('vi-VN')
+      expect(schema.contentLocation).toBeDefined()
+      expect(schema.contentLocation['@type']).toBe('Place')
+      expect(schema.contentLocation.geo['@type']).toBe('GeoCoordinates')
+      expect(schema.spatialCoverage).toBeDefined()
+      expect(schema.publisher.name).toBe('Oloka.net')
+    })
+
+    it('should generate complete Next.js Metadata with OpenGraph, Twitter, and Geo tags', () => {
+      const sampleArticle = ALL_ARTICLES[1]
+      const metadata = generateFullArticleMetadata(sampleArticle)
+
+      expect(metadata.title).toContain('Oloka.net')
+      expect(metadata.description).toBeDefined()
+      expect(metadata.alternates?.canonical).toBe(`https://oloka.net/news/${sampleArticle.slug}`)
+      expect((metadata.openGraph as any)?.type).toBe('article')
+      expect((metadata.openGraph as any)?.locale).toBe('vi_VN')
+      expect((metadata.twitter as any)?.card).toBe('summary_large_image')
+      expect(metadata.other?.['geo.region']).toBeDefined()
+      expect(metadata.other?.['geo.position']).toBeDefined()
+      expect(metadata.other?.['ICBM']).toBeDefined()
     })
   })
 

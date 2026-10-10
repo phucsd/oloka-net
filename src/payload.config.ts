@@ -8,6 +8,9 @@ import { fileURLToPath } from 'url'
 import { CloudflareContext, getCloudflareContext } from '@opennextjs/cloudflare'
 import { GetPlatformProxyOptions } from 'wrangler'
 import { r2Storage } from '@payloadcms/storage-r2'
+import { seoPlugin } from '@payloadcms/plugin-seo'
+import { redirectsPlugin } from '@payloadcms/plugin-redirects'
+import { searchPlugin } from '@payloadcms/plugin-search'
 
 import { Users } from './collections/Users'
 import { Media } from './collections/Media'
@@ -83,6 +86,20 @@ export default buildConfig({
     r2Storage({
       bucket: cloudflare.env.R2,
       collections: { media: true },
+    }),
+    seoPlugin({
+      collections: ['articles'],
+      uploadsCollection: 'media',
+      generateTitle: ({ doc }: any) => (doc?.title ? `${doc.title} | Oloka.net` : 'Oloka.net'),
+      generateDescription: ({ doc }: any) => doc?.excerpt || '',
+      generateURL: ({ doc }: any) =>
+        doc?.slug ? `https://oloka.net/news/${doc.slug}` : 'https://oloka.net',
+    }),
+    redirectsPlugin({
+      collections: ['articles'],
+    }),
+    searchPlugin({
+      collections: ['articles'],
     }),
   ],
 })

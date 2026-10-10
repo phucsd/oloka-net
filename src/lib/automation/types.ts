@@ -126,6 +126,14 @@ export interface EnrichedArticleReference {
   url?: string
 }
 
+export interface GeoTargetInfo {
+  region: string
+  place: string
+  coordinates: string
+  countryCode: string
+  placenameEn: string
+}
+
 export interface EnrichedArticle {
   titleVi: string
   slug: string
@@ -148,6 +156,7 @@ export interface EnrichedArticle {
     canonicalUrl: string
     keywords: string[]
   }
+  geo?: GeoTargetInfo
   attribution: {
     sourceName: string
     sourceUrl: string

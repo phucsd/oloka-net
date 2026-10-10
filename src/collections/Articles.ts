@@ -104,5 +104,47 @@ export const Articles: CollectionConfig = {
         position: 'sidebar',
       },
     },
+    {
+      name: 'canonicalUrl',
+      type: 'text',
+      label: 'URL Chuẩn (Canonical URL)',
+      admin: {
+        position: 'sidebar',
+      },
+    },
+    {
+      name: 'targetRegion',
+      type: 'select',
+      label: 'Vùng địa lý mục tiêu (GEO Region)',
+      defaultValue: 'VN',
+      options: [
+        { label: 'Toàn quốc (Việt Nam - VN)', value: 'VN' },
+        { label: 'Hà Nội & Miền Bắc (VN-HN)', value: 'VN-HN' },
+        { label: 'TP. Hồ Chí Minh & Miền Nam (VN-SG)', value: 'VN-SG' },
+        { label: 'Đà Nẵng & Miền Trung (VN-DN)', value: 'VN-DN' },
+        { label: 'Toàn cầu / Quốc tế (GLOBAL)', value: 'GLOBAL' },
+      ],
+      admin: {
+        position: 'sidebar',
+      },
+    },
+    {
+      name: 'geoPlace',
+      type: 'text',
+      label: 'Địa danh gắn thẻ (GEO Placename)',
+      defaultValue: 'Việt Nam',
+      admin: {
+        position: 'sidebar',
+      },
+    },
+    {
+      name: 'geoCoordinates',
+      type: 'text',
+      label: 'Tọa độ địa lý (Lat, Long)',
+      defaultValue: '21.0285, 105.8542',
+      admin: {
+        position: 'sidebar',
+      },
+    },
   ],
 }

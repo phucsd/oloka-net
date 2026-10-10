@@ -97,6 +97,24 @@ export async function initializeAutomationTables(db: D1Executor): Promise<void> 
   for (const sql of statements) {
     await db.prepare(sql).bind().run()
   }
+
+  // Ensure SEO and GEO columns exist in articles table
+  const alterStatements = [
+    'ALTER TABLE articles ADD COLUMN canonical_url TEXT;',
+    'ALTER TABLE articles ADD COLUMN target_region TEXT DEFAULT "VN";',
+    'ALTER TABLE articles ADD COLUMN geo_place TEXT DEFAULT "Việt Nam";',
+    'ALTER TABLE articles ADD COLUMN geo_coordinates TEXT DEFAULT "21.0285, 105.8542";',
+    'ALTER TABLE articles ADD COLUMN meta_title TEXT;',
+    'ALTER TABLE articles ADD COLUMN meta_description TEXT;',
+  ]
+
+  for (const alterSql of alterStatements) {
+    try {
+      await db.prepare(alterSql).bind().run()
+    } catch {
+      // Column already exists or table not ready, safely ignore
+    }
+  }
 }
 
 /**
@@ -238,28 +256,68 @@ export async function publishArticleToD1(
 ): Promise<number> {
   const now = new Date().toISOString()
   const lexicalContentStr = JSON.stringify(article.lexicalContent)
+  const canonicalUrl = article.seo?.canonicalUrl || `https://oloka.net/news/${article.slug}`
+  const targetRegion = article.geo?.region || 'VN'
+  const geoPlace = article.geo?.place || 'Việt Nam'
+  const geoCoordinates = article.geo?.coordinates || '21.0285, 105.8542'
+  const metaTitle = article.seo?.metaTitle || article.titleVi
+  const metaDescription = article.seo?.metaDescription || article.excerptVi
 
-  const insertRes = await db
-    .prepare(
-      `INSERT INTO articles (
-        title, slug, excerpt, category_id, image_url, content,
-        featured, status, published_at, updated_at, created_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    )
-    .bind(
-      article.titleVi,
-      article.slug,
-      article.excerptVi,
-      article.categoryId,
-      article.image.url,
-      lexicalContentStr,
-      article.featured ? 1 : 0,
-      status,
-      now,
-      now,
-      now,
-    )
-    .run()
+  let insertRes: any
+  try {
+    insertRes = await db
+      .prepare(
+        `INSERT INTO articles (
+          title, slug, excerpt, category_id, image_url, content,
+          featured, status, published_at, updated_at, created_at,
+          canonical_url, target_region, geo_place, geo_coordinates,
+          meta_title, meta_description
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      )
+      .bind(
+        article.titleVi,
+        article.slug,
+        article.excerptVi,
+        article.categoryId,
+        article.image.url,
+        lexicalContentStr,
+        article.featured ? 1 : 0,
+        status,
+        now,
+        now,
+        now,
+        canonicalUrl,
+        targetRegion,
+        geoPlace,
+        geoCoordinates,
+        metaTitle,
+        metaDescription,
+      )
+      .run()
+  } catch {
+    // Graceful fallback to legacy schema columns
+    insertRes = await db
+      .prepare(
+        `INSERT INTO articles (
+          title, slug, excerpt, category_id, image_url, content,
+          featured, status, published_at, updated_at, created_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      )
+      .bind(
+        article.titleVi,
+        article.slug,
+        article.excerptVi,
+        article.categoryId,
+        article.image.url,
+        lexicalContentStr,
+        article.featured ? 1 : 0,
+        status,
+        now,
+        now,
+        now,
+      )
+      .run()
+  }
 
   const articleId = insertRes?.meta?.last_row_id || 0
 

@@ -44,6 +44,13 @@ export interface ArticleItem {
   // Backward compatibility
   headings?: string[]
   paragraphs?: string[]
+  // SEO & GEO fields
+  targetRegion?: string
+  geoPlace?: string
+  geoCoordinates?: string
+  canonicalUrl?: string
+  metaTitle?: string
+  metaDescription?: string
 }
 
 export interface CategoryItem {

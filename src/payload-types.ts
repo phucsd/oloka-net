@@ -72,6 +72,8 @@ export interface Config {
     categories: Category;
     articles: Article;
     tools: Tool;
+    redirects: Redirect;
+    search: Search;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -84,6 +86,8 @@ export interface Config {
     categories: CategoriesSelect<false> | CategoriesSelect<true>;
     articles: ArticlesSelect<false> | ArticlesSelect<true>;
     tools: ToolsSelect<false> | ToolsSelect<true>;
+    redirects: RedirectsSelect<false> | RedirectsSelect<true>;
+    search: SearchSelect<false> | SearchSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -191,6 +195,7 @@ export interface Article {
   excerpt?: string | null;
   category?: (number | null) | Category;
   coverImage?: (number | null) | Media;
+  imageUrl?: string | null;
   content?: {
     root: {
       type: string;
@@ -215,6 +220,18 @@ export interface Article {
   featured?: boolean | null;
   status?: ('draft' | 'published') | null;
   publishedAt?: string | null;
+  canonicalUrl?: string | null;
+  targetRegion?: ('VN' | 'VN-HN' | 'VN-SG' | 'VN-DN' | 'GLOBAL') | null;
+  geoPlace?: string | null;
+  geoCoordinates?: string | null;
+  meta?: {
+    title?: string | null;
+    description?: string | null;
+    /**
+     * Maximum upload file size: 12MB. Recommended file size for images is <500KB.
+     */
+    image?: (number | null) | Media;
+  };
   updatedAt: string;
   createdAt: string;
 }
@@ -226,13 +243,48 @@ export interface Tool {
   id: number;
   name: string;
   slug: string;
+  url: string;
   shortDescription: string;
   icon?: string | null;
   category: 'voice' | 'utility' | 'ai' | 'developer';
-  route: string;
   badge?: ('Hot' | 'New' | 'Free' | 'Popular') | null;
   featured?: boolean | null;
   order?: number | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "redirects".
+ */
+export interface Redirect {
+  id: number;
+  from: string;
+  to?: {
+    type?: ('reference' | 'custom') | null;
+    reference?: {
+      relationTo: 'articles';
+      value: number | Article;
+    } | null;
+    url?: string | null;
+  };
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This is a collection of automatically created search results. These results are used by the global site search and will be updated automatically as documents in the CMS are created or updated.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "search".
+ */
+export interface Search {
+  id: number;
+  title?: string | null;
+  priority?: number | null;
+  doc: {
+    relationTo: 'articles';
+    value: number | Article;
+  };
   updatedAt: string;
   createdAt: string;
 }
@@ -279,6 +331,14 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'tools';
         value: number | Tool;
+      } | null)
+    | ({
+        relationTo: 'redirects';
+        value: number | Redirect;
+      } | null)
+    | ({
+        relationTo: 'search';
+        value: number | Search;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -384,6 +444,7 @@ export interface ArticlesSelect<T extends boolean = true> {
   excerpt?: T;
   category?: T;
   coverImage?: T;
+  imageUrl?: T;
   content?: T;
   tags?:
     | T
@@ -394,6 +455,17 @@ export interface ArticlesSelect<T extends boolean = true> {
   featured?: T;
   status?: T;
   publishedAt?: T;
+  canonicalUrl?: T;
+  targetRegion?: T;
+  geoPlace?: T;
+  geoCoordinates?: T;
+  meta?:
+    | T
+    | {
+        title?: T;
+        description?: T;
+        image?: T;
+      };
   updatedAt?: T;
   createdAt?: T;
 }
@@ -404,13 +476,40 @@ export interface ArticlesSelect<T extends boolean = true> {
 export interface ToolsSelect<T extends boolean = true> {
   name?: T;
   slug?: T;
+  url?: T;
   shortDescription?: T;
   icon?: T;
   category?: T;
-  route?: T;
   badge?: T;
   featured?: T;
   order?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "redirects_select".
+ */
+export interface RedirectsSelect<T extends boolean = true> {
+  from?: T;
+  to?:
+    | T
+    | {
+        type?: T;
+        reference?: T;
+        url?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "search_select".
+ */
+export interface SearchSelect<T extends boolean = true> {
+  title?: T;
+  priority?: T;
+  doc?: T;
   updatedAt?: T;
   createdAt?: T;
 }

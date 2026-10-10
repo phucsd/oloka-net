@@ -1,16 +1,12 @@
-'use client'
-
-import React, { useState } from 'react'
+import React from 'react'
 import Link from 'next/link'
-import { useParams } from 'next/navigation'
+import type { Metadata } from 'next'
 import { 
   ArrowLeft, 
   Calendar, 
   Clock, 
-  Share2, 
   Sparkles, 
   ArrowRight,
-  Check,
   User,
   ExternalLink,
   Quote as QuoteIcon,
@@ -18,88 +14,71 @@ import {
   CheckCircle2,
   Camera,
   ShieldCheck,
-  Tag
+  Tag,
+  MapPin,
+  Globe2
 } from 'lucide-react'
 import { ALL_ARTICLES, ArticleItem } from '@/lib/news-data'
+import { 
+  buildCombinedArticleJsonLd, 
+  generateFullArticleMetadata,
+  detectGeoTarget,
+  REGIONAL_GEO_PRESETS
+} from '@/lib/automation/seo-geo-engine'
+import { ShareButton } from './ShareButton'
 
-export default function ArticleDetailPage() {
-  const params = useParams()
-  const slug = params?.slug as string
-  const [copied, setCopied] = useState(false)
-  const [dynamicArticle, setDynamicArticle] = useState<ArticleItem | null>(null)
+interface PageProps {
+  params: Promise<{ slug: string }>
+}
 
-  // Fetch from D1 if not present in static ALL_ARTICLES
-  React.useEffect(() => {
-    const staticFound = ALL_ARTICLES.find((a) => a.slug === slug)
-    if (!staticFound && slug) {
-      fetch(`/api/articles?where[slug][equals]=${encodeURIComponent(slug)}&depth=1`)
-        .then((res) => res.json())
-        .then((data: any) => {
-          const doc = data?.docs?.[0]
-          if (doc) {
-            let paragraphs: string[] = []
-            try {
-              if (doc.content?.root?.children) {
-                paragraphs = doc.content.root.children
-                  .filter((c: any) => c.type === 'paragraph')
-                  .map((c: any) => c.children?.map((ch: any) => ch.text).join('') || '')
-                  .filter(Boolean)
-              }
-            } catch {}
+/**
+ * Helper to fetch article by slug from curated dataset or fallback
+ */
+async function getArticle(slug: string): Promise<ArticleItem> {
+  const staticFound = ALL_ARTICLES.find((a) => a.slug === slug)
+  if (staticFound) return staticFound
 
-            setDynamicArticle({
-              id: String(doc.id),
-              title: doc.title,
-              slug: doc.slug,
-              category: doc.category?.slug || 'tech-trends',
-              categoryName: doc.category?.name || 'Xu hướng Công nghệ',
-              categoryColor: doc.category?.color || '#46C7F0',
-              excerpt: doc.excerpt || '',
-              imageUrl: doc.imageUrl || 'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1200&q=80',
-              imageCaption: 'Ảnh tư liệu bài viết tự động cập nhật',
-              author: 'Biên tập viên Oloka News',
-              source: { name: 'Oloka Automation' },
-              publishedAt: doc.publishedAt ? new Date(doc.publishedAt).toLocaleDateString('vi-VN') : 'Mới cập nhật',
-              readTime: '4 phút đọc',
-              featured: Boolean(doc.featured),
-              keyTakeaways: ['Bài viết phân tích tự động từ hệ thống xuất bản tin tức AI Oloka.'],
-              sections: [
-                {
-                  heading: 'Diễn biến và bối cảnh sự kiện',
-                  paragraphs: paragraphs.length > 0 ? paragraphs : [doc.excerpt || ''],
-                },
-              ],
-              references: [],
-              tags: (doc.tags || []).map((t: any) => t.tag || t).filter(Boolean),
-            })
-          }
-        })
-        .catch(() => {})
-    }
-  }, [slug])
+  // Fallback to first article if slug not matched
+  return ALL_ARTICLES[0]
+}
 
-  // Find article by slug, or dynamic article, or fallback to first article
-  const article = ALL_ARTICLES.find((a) => a.slug === slug) || dynamicArticle || ALL_ARTICLES[0]
+/**
+ * Next.js Server-Side Dynamic SEO & GEO Metadata Generator
+ */
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const { slug } = await params
+  const article = await getArticle(slug)
+  return generateFullArticleMetadata(article)
+}
+
+/**
+ * Server Component for News Article Detail Page
+ * Delivers full SSR, Geo tagging, and Schema.org JSON-LD structured data to search engines
+ */
+export default async function ArticleDetailPage({ params }: PageProps) {
+  const { slug } = await params
+  const article = await getArticle(slug)
+
+  // Combined Schema.org JSON-LD (NewsArticle, BreadcrumbList, Organization)
+  const jsonLd = buildCombinedArticleJsonLd(article)
+
+  // Geo classification
+  const geo = (article.targetRegion ? REGIONAL_GEO_PRESETS[article.targetRegion] : undefined) || 
+    detectGeoTarget(article.title, article.excerpt, article.tags)
 
   // Related articles in same category
   const relatedArticles = ALL_ARTICLES
     .filter((a) => a.category === article.category && a.id !== article.id)
     .slice(0, 3)
 
-  const handleShare = () => {
-    if (typeof window !== 'undefined') {
-      if (navigator.share) {
-        navigator.share({ title: article.title, url: window.location.href })
-      } else {
-        navigator.clipboard.writeText(window.location.href)
-        setCopied(true)
-        setTimeout(() => setCopied(false), 2500)
-      }
-    }
-  }
-
   return (
     <div className="py-10 px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto">
+      {/* Schema.org JSON-LD Structured Data for Google News & SEO Crawlers */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+
       {/* Back button */}
       <Link
         href="/news"
@@ -114,12 +93,23 @@ export default function ArticleDetailPage() {
         
         {/* Article Header */}
         <header className="space-y-4 mb-8">
-          {/* Metadata badges */}
+          {/* Metadata & GEO badges */}
           <div className="flex items-center gap-3 flex-wrap">
             <span className="px-3 py-1 rounded-full text-xs font-bold bg-sky-50 text-[#0284c7] border border-sky-200 flex items-center gap-1.5">
               <Sparkles className="w-3.5 h-3.5" />
               <span>{article.categoryName}</span>
             </span>
+
+            {/* GEO Localized Tag */}
+            <span className="px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1.5" title={`Vùng địa lý mục tiêu: ${geo.place} (${geo.coordinates})`}>
+              {geo.region === 'GLOBAL' ? (
+                <Globe2 className="w-3.5 h-3.5 text-emerald-600" />
+              ) : (
+                <MapPin className="w-3.5 h-3.5 text-emerald-600" />
+              )}
+              <span>{geo.place}</span>
+            </span>
+
             <span className="text-xs text-slate-500 flex items-center gap-1 font-medium">
               <Calendar className="w-3.5 h-3.5 text-slate-400" />
               <span>{article.publishedAt}</span>
@@ -244,7 +234,6 @@ export default function ArticleDetailPage() {
               </section>
             ))
           ) : article.headings && article.headings.length > 0 ? (
-            // Backward compatibility fallback
             article.headings.map((heading, idx) => (
               <section key={idx} className="space-y-3 pt-2">
                 <h2 className="text-xl sm:text-2xl font-bold text-slate-900 mt-6 mb-3 flex items-center gap-2.5">
@@ -323,22 +312,7 @@ export default function ArticleDetailPage() {
             ))}
           </div>
 
-          <button
-            onClick={handleShare}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200 transition-colors cursor-pointer"
-          >
-            {copied ? (
-              <>
-                <Check className="w-3.5 h-3.5 text-emerald-600" />
-                <span className="text-emerald-700">Đã chép liên kết!</span>
-              </>
-            ) : (
-              <>
-                <Share2 className="w-3.5 h-3.5 text-[#0284c7]" />
-                <span>Chia sẻ bài viết</span>
-              </>
-            )}
-          </button>
+          <ShareButton title={article.title} />
         </footer>
       </article>
 

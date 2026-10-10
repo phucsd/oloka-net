@@ -10,7 +10,7 @@
  */
 
 import { EnrichedArticle, EnrichedArticleSection, NewsCandidate, NewsSource } from './types'
-import { slugifyVietnamese, generateSeoMetadata } from './seo-geo-engine'
+import { slugifyVietnamese, generateSeoMetadata, detectGeoTarget } from './seo-geo-engine'
 import { acquireLicensedImage } from './image-engine'
 import { stripHtml } from './rss-parser'
 import { sanitizeUntrustedContent } from './copyright-engine'
@@ -333,8 +333,9 @@ Nội dung: ${sanitizedContent}`
     .slice(-4)
   const slug = `${baseSlug}-${timestampSuffix}`
 
-  // SEO metadata
+  // SEO & GEO metadata
   const seo = generateSeoMetadata(titleVi, excerptVi, slug)
+  const geo = detectGeoTarget(titleVi, excerptVi, [categoryInfo.name, ...candidate.tags])
 
   // Acquire safe licensed image
   const image = await acquireLicensedImage(
@@ -385,6 +386,7 @@ Nội dung: ${sanitizedContent}`
       ...seo,
       keywords: [source.name, categoryInfo.name, 'công nghệ', 'AI'],
     },
+    geo,
     attribution: {
       sourceName: source.name,
       sourceUrl: candidate.canonicalUrl,
