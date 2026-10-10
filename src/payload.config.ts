@@ -6,7 +6,7 @@ import { lexicalEditor } from '@payloadcms/richtext-lexical'
 import { buildConfig } from 'payload'
 import { fileURLToPath } from 'url'
 import { CloudflareContext, getCloudflareContext } from '@opennextjs/cloudflare'
-import { GetPlatformProxyOptions } from 'wrangler'
+import type { GetPlatformProxyOptions } from 'wrangler'
 import { r2Storage } from '@payloadcms/storage-r2'
 import { seoPlugin } from '@payloadcms/plugin-seo'
 import { redirectsPlugin } from '@payloadcms/plugin-redirects'
@@ -29,14 +29,17 @@ const realpath = (value: string) => {
   }
 }
 
-const isCLI = process.argv.some((value) => {
-  const resolved = realpath(value)
-  if (!resolved) return false
-  return (
-    resolved.endsWith(path.join('payload', 'bin.js')) ||
-    resolved.endsWith(path.join('next', 'dist', 'bin', 'next'))
-  )
-})
+const isCLI =
+  typeof process !== 'undefined' &&
+  Array.isArray(process.argv) &&
+  process.argv.some((value) => {
+    const resolved = realpath(value)
+    if (!resolved) return false
+    return (
+      resolved.endsWith(path.join('payload', 'bin.js')) ||
+      resolved.endsWith(path.join('next', 'dist', 'bin', 'next'))
+    )
+  })
 const isProduction = process.env.NODE_ENV === 'production'
 
 const createLog =
@@ -82,7 +85,8 @@ export default buildConfig({
   },
   db: sqliteD1Adapter({
     binding: cloudflare.env.D1,
-    prodMigrations: migrations,
+    prodMigrations: isCLI ? migrations : undefined,
+    push: false,
   }),
   logger: isProduction ? cloudflareLogger : undefined,
   plugins: [
@@ -114,7 +118,7 @@ function getCloudflareContextFromWrangler(): Promise<CloudflareContext> {
       getPlatformProxy({
         environment: process.env.CLOUDFLARE_ENV,
         remoteBindings: process.env.REMOTE_BINDINGS === 'true',
-        persist: false,
+        persist: true,
       } satisfies GetPlatformProxyOptions),
   )
 }

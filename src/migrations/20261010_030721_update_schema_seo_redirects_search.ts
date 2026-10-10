@@ -1,7 +1,7 @@
 import { MigrateUpArgs, MigrateDownArgs, sql } from '@payloadcms/db-d1-sqlite'
 
 export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
-  await db.run(sql`CREATE TABLE \`redirects\` (
+  await db.run(sql`CREATE TABLE IF NOT EXISTS \`redirects\` (
   	\`id\` integer PRIMARY KEY NOT NULL,
   	\`from\` text NOT NULL,
   	\`to_type\` text DEFAULT 'reference',
@@ -10,10 +10,10 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   	\`created_at\` text DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')) NOT NULL
   );
   `)
-  await db.run(sql`CREATE UNIQUE INDEX \`redirects_from_idx\` ON \`redirects\` (\`from\`);`)
-  await db.run(sql`CREATE INDEX \`redirects_updated_at_idx\` ON \`redirects\` (\`updated_at\`);`)
-  await db.run(sql`CREATE INDEX \`redirects_created_at_idx\` ON \`redirects\` (\`created_at\`);`)
-  await db.run(sql`CREATE TABLE \`redirects_rels\` (
+  await db.run(sql`CREATE UNIQUE INDEX IF NOT EXISTS \`redirects_from_idx\` ON \`redirects\` (\`from\`);`)
+  await db.run(sql`CREATE INDEX IF NOT EXISTS \`redirects_updated_at_idx\` ON \`redirects\` (\`updated_at\`);`)
+  await db.run(sql`CREATE INDEX IF NOT EXISTS \`redirects_created_at_idx\` ON \`redirects\` (\`created_at\`);`)
+  await db.run(sql`CREATE TABLE IF NOT EXISTS \`redirects_rels\` (
   	\`id\` integer PRIMARY KEY NOT NULL,
   	\`order\` integer,
   	\`parent_id\` integer NOT NULL,
@@ -23,11 +23,11 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   	FOREIGN KEY (\`articles_id\`) REFERENCES \`articles\`(\`id\`) ON UPDATE no action ON DELETE cascade
   );
   `)
-  await db.run(sql`CREATE INDEX \`redirects_rels_order_idx\` ON \`redirects_rels\` (\`order\`);`)
-  await db.run(sql`CREATE INDEX \`redirects_rels_parent_idx\` ON \`redirects_rels\` (\`parent_id\`);`)
-  await db.run(sql`CREATE INDEX \`redirects_rels_path_idx\` ON \`redirects_rels\` (\`path\`);`)
-  await db.run(sql`CREATE INDEX \`redirects_rels_articles_id_idx\` ON \`redirects_rels\` (\`articles_id\`);`)
-  await db.run(sql`CREATE TABLE \`search\` (
+  await db.run(sql`CREATE INDEX IF NOT EXISTS \`redirects_rels_order_idx\` ON \`redirects_rels\` (\`order\`);`)
+  await db.run(sql`CREATE INDEX IF NOT EXISTS \`redirects_rels_parent_idx\` ON \`redirects_rels\` (\`parent_id\`);`)
+  await db.run(sql`CREATE INDEX IF NOT EXISTS \`redirects_rels_path_idx\` ON \`redirects_rels\` (\`path\`);`)
+  await db.run(sql`CREATE INDEX IF NOT EXISTS \`redirects_rels_articles_id_idx\` ON \`redirects_rels\` (\`articles_id\`);`)
+  await db.run(sql`CREATE TABLE IF NOT EXISTS \`search\` (
   	\`id\` integer PRIMARY KEY NOT NULL,
   	\`title\` text,
   	\`priority\` numeric,
@@ -35,9 +35,9 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   	\`created_at\` text DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')) NOT NULL
   );
   `)
-  await db.run(sql`CREATE INDEX \`search_updated_at_idx\` ON \`search\` (\`updated_at\`);`)
-  await db.run(sql`CREATE INDEX \`search_created_at_idx\` ON \`search\` (\`created_at\`);`)
-  await db.run(sql`CREATE TABLE \`search_rels\` (
+  await db.run(sql`CREATE INDEX IF NOT EXISTS \`search_updated_at_idx\` ON \`search\` (\`updated_at\`);`)
+  await db.run(sql`CREATE INDEX IF NOT EXISTS \`search_created_at_idx\` ON \`search\` (\`created_at\`);`)
+  await db.run(sql`CREATE TABLE IF NOT EXISTS \`search_rels\` (
   	\`id\` integer PRIMARY KEY NOT NULL,
   	\`order\` integer,
   	\`parent_id\` integer NOT NULL,
@@ -47,23 +47,34 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   	FOREIGN KEY (\`articles_id\`) REFERENCES \`articles\`(\`id\`) ON UPDATE no action ON DELETE cascade
   );
   `)
-  await db.run(sql`CREATE INDEX \`search_rels_order_idx\` ON \`search_rels\` (\`order\`);`)
-  await db.run(sql`CREATE INDEX \`search_rels_parent_idx\` ON \`search_rels\` (\`parent_id\`);`)
-  await db.run(sql`CREATE INDEX \`search_rels_path_idx\` ON \`search_rels\` (\`path\`);`)
-  await db.run(sql`CREATE INDEX \`search_rels_articles_id_idx\` ON \`search_rels\` (\`articles_id\`);`)
-  await db.run(sql`ALTER TABLE \`articles\` ADD \`image_url\` text;`)
-  await db.run(sql`ALTER TABLE \`articles\` ADD \`canonical_url\` text;`)
-  await db.run(sql`ALTER TABLE \`articles\` ADD \`target_region\` text DEFAULT 'VN';`)
-  await db.run(sql`ALTER TABLE \`articles\` ADD \`geo_place\` text DEFAULT 'Việt Nam';`)
-  await db.run(sql`ALTER TABLE \`articles\` ADD \`geo_coordinates\` text DEFAULT '21.0285, 105.8542';`)
-  await db.run(sql`ALTER TABLE \`articles\` ADD \`meta_title\` text;`)
-  await db.run(sql`ALTER TABLE \`articles\` ADD \`meta_description\` text;`)
-  await db.run(sql`ALTER TABLE \`articles\` ADD \`meta_image_id\` integer REFERENCES media(id);`)
-  await db.run(sql`CREATE INDEX \`articles_meta_meta_image_idx\` ON \`articles\` (\`meta_image_id\`);`)
-  await db.run(sql`ALTER TABLE \`payload_locked_documents_rels\` ADD \`redirects_id\` integer REFERENCES redirects(id);`)
-  await db.run(sql`ALTER TABLE \`payload_locked_documents_rels\` ADD \`search_id\` integer REFERENCES search(id);`)
-  await db.run(sql`CREATE INDEX \`payload_locked_documents_rels_redirects_id_idx\` ON \`payload_locked_documents_rels\` (\`redirects_id\`);`)
-  await db.run(sql`CREATE INDEX \`payload_locked_documents_rels_search_id_idx\` ON \`payload_locked_documents_rels\` (\`search_id\`);`)
+  await db.run(sql`CREATE INDEX IF NOT EXISTS \`search_rels_order_idx\` ON \`search_rels\` (\`order\`);`)
+  await db.run(sql`CREATE INDEX IF NOT EXISTS \`search_rels_parent_idx\` ON \`search_rels\` (\`parent_id\`);`)
+  await db.run(sql`CREATE INDEX IF NOT EXISTS \`search_rels_path_idx\` ON \`search_rels\` (\`path\`);`)
+  await db.run(sql`CREATE INDEX IF NOT EXISTS \`search_rels_articles_id_idx\` ON \`search_rels\` (\`articles_id\`);`)
+
+  const safeAlter = async (statement: any) => {
+    try {
+      await db.run(statement)
+    } catch (e: any) {
+      if (!e?.message?.toLowerCase().includes('duplicate column')) {
+        console.warn('ALTER TABLE notice:', e?.message || e)
+      }
+    }
+  }
+
+  await safeAlter(sql`ALTER TABLE \`articles\` ADD \`image_url\` text;`)
+  await safeAlter(sql`ALTER TABLE \`articles\` ADD \`canonical_url\` text;`)
+  await safeAlter(sql`ALTER TABLE \`articles\` ADD \`target_region\` text DEFAULT 'VN';`)
+  await safeAlter(sql`ALTER TABLE \`articles\` ADD \`geo_place\` text DEFAULT 'Việt Nam';`)
+  await safeAlter(sql`ALTER TABLE \`articles\` ADD \`geo_coordinates\` text DEFAULT '21.0285, 105.8542';`)
+  await safeAlter(sql`ALTER TABLE \`articles\` ADD \`meta_title\` text;`)
+  await safeAlter(sql`ALTER TABLE \`articles\` ADD \`meta_description\` text;`)
+  await safeAlter(sql`ALTER TABLE \`articles\` ADD \`meta_image_id\` integer REFERENCES media(id);`)
+  await db.run(sql`CREATE INDEX IF NOT EXISTS \`articles_meta_meta_image_idx\` ON \`articles\` (\`meta_image_id\`);`)
+  await safeAlter(sql`ALTER TABLE \`payload_locked_documents_rels\` ADD \`redirects_id\` integer REFERENCES redirects(id);`)
+  await safeAlter(sql`ALTER TABLE \`payload_locked_documents_rels\` ADD \`search_id\` integer REFERENCES search(id);`)
+  await db.run(sql`CREATE INDEX IF NOT EXISTS \`payload_locked_documents_rels_redirects_id_idx\` ON \`payload_locked_documents_rels\` (\`redirects_id\`);`)
+  await db.run(sql`CREATE INDEX IF NOT EXISTS \`payload_locked_documents_rels_search_id_idx\` ON \`payload_locked_documents_rels\` (\`search_id\`);`)
 }
 
 export async function down({ db, payload, req }: MigrateDownArgs): Promise<void> {
