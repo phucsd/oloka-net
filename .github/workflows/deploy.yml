@@ -31,10 +31,11 @@ jobs:
         run: pnpm run generate:importmap
 
       - name: Migrate Database
-        run: |
-          npx wrangler d1 execute oloka-net --remote --file=src/migrations/20261010_030721_update_schema_seo_redirects_search.sql || true
-          cross-env NODE_ENV=production PAYLOAD_SECRET=ignore REMOTE_BINDINGS=true pnpm payload migrate || true
+        run: pnpm payload migrate || true
         env:
+          NODE_ENV: production
+          PAYLOAD_SECRET: ignore
+          REMOTE_BINDINGS: 'true'
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: 7719e72989f5f2c061f486cb0fe89fda
 

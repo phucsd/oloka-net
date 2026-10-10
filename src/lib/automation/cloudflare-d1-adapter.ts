@@ -96,19 +96,21 @@ export async function getD1Executor(): Promise<D1Executor> {
   }
 
   // 3. In local Node.js / dev server, use Wrangler getPlatformProxy
-  try {
-    const wrangler = await import(/* webpackIgnore: true */ 'wrangler')
-    if (wrangler?.getPlatformProxy) {
-      const proxy = await wrangler.getPlatformProxy({
-        remoteBindings: process.env.REMOTE_BINDINGS === 'true',
-        persist: true,
-      })
-      if (proxy?.env?.D1) {
-        return proxy.env.D1 as any
+  if (process.env.NODE_ENV !== 'production') {
+    try {
+      const wrangler = await import(/* webpackIgnore: true */ `${'__wrangler'.replaceAll('_', '')}`)
+      if (wrangler?.getPlatformProxy) {
+        const proxy = await wrangler.getPlatformProxy({
+          remoteBindings: process.env.REMOTE_BINDINGS === 'true',
+          persist: true,
+        })
+        if (proxy?.env?.D1) {
+          return proxy.env.D1 as any
+        }
       }
+    } catch {
+      // Fallback
     }
-  } catch {
-    // Fallback
   }
 
   return createHttpD1Executor(accountId, dbId, token)

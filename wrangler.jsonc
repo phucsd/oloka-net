@@ -9,6 +9,9 @@
     // Allow to fetch URLs in your app
     "global_fetch_strictly_public"
   ],
+  "alias": {
+    "sqlite": "node:sqlite"
+  },
   "assets": {
     "directory": ".open-next/assets",
     "binding": "ASSETS"
