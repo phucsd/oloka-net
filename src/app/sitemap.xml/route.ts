@@ -29,6 +29,10 @@ export async function GET() {
     { loc: `${baseUrl}/tools/qr-code`, priority: '0.7', changefreq: 'weekly', lastmod: now },
     { loc: `${baseUrl}/tools/tts`, priority: '0.7', changefreq: 'weekly', lastmod: now },
     { loc: `${baseUrl}/tools/voice`, priority: '0.7', changefreq: 'weekly', lastmod: now },
+    { loc: `${baseUrl}/about`, priority: '0.6', changefreq: 'monthly', lastmod: now },
+    { loc: `${baseUrl}/privacy`, priority: '0.5', changefreq: 'monthly', lastmod: now },
+    { loc: `${baseUrl}/terms`, priority: '0.5', changefreq: 'monthly', lastmod: now },
+    { loc: `${baseUrl}/contact`, priority: '0.6', changefreq: 'monthly', lastmod: now },
   ]
 
   const articleUrls = ALL_ARTICLES.map((a) => ({

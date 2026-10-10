@@ -114,32 +114,37 @@ export const Footer: React.FC = () => {
             </ul>
           </div>
 
-          {/* System & Admin */}
+          {/* About & Policies */}
           <div>
             <h3 className="text-sm font-bold uppercase tracking-wider text-slate-800 mb-4">
-              Biên tập & Quản trị
+              Về Oloka & Pháp lý
             </h3>
-            <ul className="space-y-2.5 text-sm">
+            <ul className="space-y-2 text-sm">
               <li>
-                <Link href="/admin" className="text-slate-700 hover:text-slate-900 font-semibold transition-colors flex items-center gap-1">
-                  <span>Trang quản trị Payload CMS</span>
-                  <ExternalLink className="w-3 h-3 text-slate-500" />
+                <Link href="/about" className="text-slate-600 hover:text-[#0284c7] transition-colors">
+                  Giới thiệu & Ban biên tập
                 </Link>
               </li>
               <li>
-                <span className="text-xs text-slate-500">
-                  Lưu trữ Media: Cloudflare R2
-                </span>
+                <Link href="/privacy" className="text-slate-600 hover:text-[#0284c7] transition-colors">
+                  Chính sách bảo mật dữ liệu
+                </Link>
               </li>
               <li>
-                <span className="text-xs text-slate-500">
-                  Cơ sở dữ liệu: Cloudflare D1 (40 bài viết tuyển chọn)
-                </span>
+                <Link href="/terms" className="text-slate-600 hover:text-[#0284c7] transition-colors">
+                  Điều khoản & Bản quyền
+                </Link>
               </li>
               <li>
-                <span className="text-xs text-slate-500">
-                  Hạ tầng phân tán: OpenNext Cloudflare
-                </span>
+                <Link href="/contact" className="text-slate-600 hover:text-[#0284c7] transition-colors">
+                  Liên hệ & Góp ý nội dung
+                </Link>
+              </li>
+              <li className="pt-1 border-t border-slate-200">
+                <Link href="/admin" className="text-slate-700 hover:text-slate-900 font-semibold transition-colors flex items-center gap-1 text-xs">
+                  <span>Trang quản trị Payload CMS</span>
+                  <ExternalLink className="w-3 h-3 text-slate-500" />
+                </Link>
               </li>
             </ul>
           </div>
@@ -147,11 +152,28 @@ export const Footer: React.FC = () => {
 
         {/* Bottom bar */}
         <div className="mt-12 pt-6 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-4">
-          <p>© {new Date().getFullYear()} Oloka.net. Báo điện tử & Tin tức AI Công nghệ.</p>
-          <div className="flex items-center gap-2">
-            <span>Tone màu nhận diện:</span>
-            <span className="px-2 py-0.5 rounded bg-sky-100 text-sky-800 font-mono font-semibold">#46C7F0</span>
-            <span className="px-2 py-0.5 rounded bg-orange-100 text-orange-800 font-mono font-semibold">#F47D59</span>
+          <p>© {new Date().getFullYear()} Oloka.net. Chuyên trang Tin tức & Kiến thức Công nghệ AI.</p>
+          <div className="flex flex-wrap items-center gap-3">
+            {/* DMCA Protected Badge */}
+            <a
+              href="https://www.dmca.com/Protection/Status.aspx?ID=oloka-net"
+              target="_blank"
+              rel="noreferrer"
+              title="DMCA.com Protection Status"
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-slate-900 text-white text-[11px] font-bold hover:bg-slate-800 transition-colors shadow-xs"
+            >
+              <span className="w-2 h-2 rounded-full bg-emerald-400" />
+              <span className="tracking-wide">DMCA</span>
+              <span className="text-[10px] text-slate-300 font-normal border-l border-slate-700 pl-1.5">PROTECTED</span>
+            </a>
+
+            {/* Creative Commons Open License */}
+            <span className="inline-flex items-center px-2 py-0.5 rounded bg-slate-200/80 text-slate-700 text-[11px] font-medium">
+              CC BY-NC-SA 4.0
+            </span>
+
+            <span className="text-slate-400 hidden sm:inline">•</span>
+            <span className="text-slate-500 text-[11px] hidden sm:inline">Edge Cloudflare Network</span>
           </div>
         </div>
       </div>

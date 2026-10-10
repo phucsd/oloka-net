@@ -190,11 +190,28 @@ export const Navbar: React.FC = () => {
             </span>
             <ExternalLink className="w-4 h-4 text-slate-400" />
           </Link>
-          <div className="pt-3 border-t border-slate-200">
+          <div className="pt-3 border-t border-slate-200 space-y-2">
+            <div className="flex items-center justify-between text-xs px-2 text-slate-500">
+              <Link href="/about" onClick={() => setIsOpen(false)} className="hover:text-sky-600">
+                Giới thiệu
+              </Link>
+              <span>•</span>
+              <Link href="/privacy" onClick={() => setIsOpen(false)} className="hover:text-sky-600">
+                Bảo mật
+              </Link>
+              <span>•</span>
+              <Link href="/terms" onClick={() => setIsOpen(false)} className="hover:text-sky-600">
+                Điều khoản
+              </Link>
+              <span>•</span>
+              <Link href="/contact" onClick={() => setIsOpen(false)} className="hover:text-sky-600">
+                Liên hệ
+              </Link>
+            </div>
             <Link
               href="/admin"
               onClick={() => setIsOpen(false)}
-              className="flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg bg-slate-100 text-slate-800 text-sm font-semibold hover:bg-slate-200"
+              className="flex items-center justify-center gap-2 py-2 px-4 rounded-lg bg-slate-100 text-slate-800 text-sm font-semibold hover:bg-slate-200"
             >
               <Settings className="w-4 h-4" />
               <span>Quản trị CMS (/admin)</span>
