@@ -79,12 +79,7 @@ export async function getD1Executor(): Promise<D1Executor> {
   const accountId = process.env.CLOUDFLARE_ACCOUNT_ID || '7719e72989f5f2c061f486cb0fe89fda'
   const dbId = '4c06a31a-d8d7-4106-bfbe-e0bba7ff8157' // oloka-net D1 database ID
 
-  // If running from CLI / standalone runner, ALWAYS use Cloudflare HTTP API to target remote D1 directly
-  if (process.env.IS_STANDALONE_RUNNER === 'true' || typeof (globalThis as any).WebSocketPair === 'undefined') {
-    return createHttpD1Executor(accountId, dbId, token)
-  }
-
-  // Check if running in OpenNext / Cloudflare Workers runtime
+  // 1. Check if running in OpenNext / Cloudflare Workers runtime
   try {
     const { getCloudflareContext } = await import('@opennextjs/cloudflare')
     const ctx = await getCloudflareContext({ async: true })
@@ -93,6 +88,27 @@ export async function getD1Executor(): Promise<D1Executor> {
     }
   } catch {
     // Not in worker runtime
+  }
+
+  // 2. If token is configured and running as standalone runner, use HTTP API
+  if (token && process.env.IS_STANDALONE_RUNNER === 'true') {
+    return createHttpD1Executor(accountId, dbId, token)
+  }
+
+  // 3. In local Node.js / dev server, use Wrangler getPlatformProxy
+  try {
+    const wrangler = await import(/* webpackIgnore: true */ 'wrangler')
+    if (wrangler?.getPlatformProxy) {
+      const proxy = await wrangler.getPlatformProxy({
+        remoteBindings: process.env.REMOTE_BINDINGS === 'true',
+        persist: true,
+      })
+      if (proxy?.env?.D1) {
+        return proxy.env.D1 as any
+      }
+    }
+  } catch {
+    // Fallback
   }
 
   return createHttpD1Executor(accountId, dbId, token)

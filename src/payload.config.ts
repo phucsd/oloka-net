@@ -70,6 +70,9 @@ export default buildConfig({
     importMap: {
       baseDir: path.resolve(dirname),
     },
+    components: {
+      afterNavLinks: ['./app/(payload)/admin/components/AutomationNavLink#AutomationNavLink'],
+    },
   },
   collections: [Users, Media, Categories, Articles, Tools],
   editor: lexicalEditor(),

@@ -27,6 +27,14 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Generate Import Map
+        run: pnpm run generate:importmap
+
+      - name: Migrate Database
+        run: cross-env NODE_ENV=production PAYLOAD_SECRET=ignore REMOTE_BINDINGS=true pnpm payload migrate
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+
       - name: Build with OpenNext
         run: npx opennextjs-cloudflare build
         env:
